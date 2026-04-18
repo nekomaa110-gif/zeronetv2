@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mysql -u zeen -p1100 radius -e \"SELECT migration FROM migrations ORDER BY batch;\")",
+      "Bash(npm run *)",
+      "Bash(php artisan *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/admin/dashboard)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -L http://localhost:8000/admin/dashboard)",
+      "Bash(curl -s http://localhost:8000/login)",
+      "Bash(php -r 'require '\\\\''/var/www/html/radius-admin/vendor/autoload.php'\\\\''; $pdo = new PDO\\('\\\\''mysql:host=127.0.0.1;dbname=radius'\\\\'', '\\\\''radius'\\\\'', '\\\\''radiuspassword'\\\\''\\); $r = $pdo->query\\('\\\\''DESCRIBE radpostauth'\\\\''\\); foreach\\($r as $row\\) echo implode\\('\\\\'', '\\\\'', $row\\).\"\\\\n\";')",
+      "Bash(mysql -u root radius -e \"DESCRIBE radpostauth;\")",
+      "Bash(sudo tee *)",
+      "Bash(sudo python3 *)",
+      "Bash(radtest sukmo *)",
+      "Bash(xargs ls *)",
+      "Bash(php -r ' *)",
+      "Bash(php /var/www/html/radius-admin/artisan --version)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('PHP:', d.get\\('require',{}\\).get\\('php',''\\)\\); [print\\(k,':',v\\) for k,v in list\\(d.get\\('require',{}\\).items\\(\\)\\)[:15]]\")"
+    ]
+  }
+}

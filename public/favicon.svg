@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#7c3aed"/>
+  <g fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- WiFi arc 1 (luar) -->
+    <path d="M4.5 12.5c3.18-3.18 7.5-4.5 11.5-4.5s8.32 1.32 11.5 4.5"/>
+    <!-- WiFi arc 2 (tengah) -->
+    <path d="M7.8 15.8c2.32-2.32 5.5-3.8 8.2-3.8s5.88 1.48 8.2 3.8"/>
+    <!-- WiFi arc 3 (dalam) -->
+    <path d="M11.1 19.1c1.48-1.48 3.5-2.1 4.9-2.1s3.42.62 4.9 2.1"/>
+    <!-- Dot -->
+    <circle cx="16" cy="23" r="1.2" fill="white" stroke="none"/>
+  </g>
+</svg>
