@@ -17,7 +17,7 @@ class DashboardController extends Controller
             'total_users'        => RadCheck::where('attribute', 'Cleartext-Password')->distinct('username')->count(),
             'active_users'       => RadCheck::where('attribute', 'Cleartext-Password')->distinct('username')->count(),
             'online_sessions'    => RadAcct::whereNull('acctstoptime')->count(),
-            'available_vouchers' => Voucher::where('status', 'unused')->count(),
+            'available_vouchers' => Voucher::where('status', 'ready')->count(),
         ];
 
         $recentLogs = ActivityLog::with('user')

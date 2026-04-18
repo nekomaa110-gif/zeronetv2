@@ -104,12 +104,19 @@ class VoucherController extends Controller
 
     public function print(Request $request): View
     {
-        $ids = array_filter(explode(',', $request->input('ids', '')));
-
         $vouchers = Voucher::with('package')
-            ->when(!empty($ids), fn ($q) => $q->whereIn('id', $ids))
+            ->when($request->boolean('print_all'), function ($q) use ($request) {
+                // Print semua hasil filter (lintas halaman)
+                if ($request->filled('status')) $q->byStatus($request->input('status'));
+                if ($request->filled('type'))   $q->byType($request->input('type'));
+                if ($request->filled('search')) $q->search($request->input('search'));
+            }, function ($q) use ($request) {
+                // Print by ID terpilih
+                $ids = array_filter(explode(',', $request->input('ids', '')));
+                if (!empty($ids)) $q->whereIn('id', $ids);
+            })
             ->orderBy('created_at')
-            ->limit(200)
+            ->limit(500)
             ->get();
 
         return view('admin.vouchers.print', compact('vouchers'));

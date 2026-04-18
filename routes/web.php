@@ -42,6 +42,8 @@ Route::prefix('admin')
         Route::middleware('role:admin')->group(function () {
             Route::get('packages/create', [PackageController::class, 'create'])->name('packages.create');
             Route::post('packages', [PackageController::class, 'store'])->name('packages.store');
+            // Import profil lama → HARUS sebelum {package} agar tidak di-bind sebagai model
+            Route::get('packages/legacy/{groupname}/edit', [PackageController::class, 'legacyEdit'])->name('packages.legacy-edit');
             Route::get('packages/{package}/edit', [PackageController::class, 'edit'])->name('packages.edit');
             Route::put('packages/{package}', [PackageController::class, 'update'])->name('packages.update');
             Route::delete('packages/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');

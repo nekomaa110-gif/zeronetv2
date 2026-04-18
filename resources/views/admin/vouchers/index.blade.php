@@ -48,7 +48,7 @@
                                    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
                         <option value="">Semua Status</option>
                         <option value="ready"    @selected($status === 'ready')>Ready</option>
-                        <option value="active"   @selected($status === 'active')>Aktif</option>
+                        <option value="active"   @selected($status === 'active')>Digunakan</option>
                         <option value="expired"  @selected($status === 'expired')>Expired</option>
                         <option value="disabled" @selected($status === 'disabled')>Nonaktif</option>
                     </select>
@@ -75,6 +75,14 @@
                     @endif
                 </div>
             </form>
+        </div>
+
+        {{-- Banner pilih semua lintas halaman (Gmail-style) --}}
+        <div id="select-all-banner" class="hidden px-5 py-2.5 bg-brand-50 dark:bg-brand-900/20 border-b border-brand-100 dark:border-brand-800 text-sm text-brand-700 dark:text-brand-300 flex items-center gap-2">
+            <span id="banner-text"></span>
+            <button id="btn-select-all-pages" type="button"
+                    class="font-semibold underline underline-offset-2 hover:text-brand-900 dark:hover:text-brand-100">
+            </button>
         </div>
 
         {{-- Tabel --}}
@@ -132,16 +140,16 @@
                             <td class="px-5 py-3.5 text-center">
                                 @switch($v->status)
                                     @case('ready')
-                                        <x-admin.badge color="gray">Ready</x-admin.badge>
+                                        <x-admin.badge color="green" :dot="true">Ready</x-admin.badge>
                                         @break
                                     @case('active')
-                                        <x-admin.badge color="green" :dot="true">Aktif</x-admin.badge>
+                                        <x-admin.badge color="yellow" :dot="true">Digunakan</x-admin.badge>
                                         @break
                                     @case('expired')
                                         <x-admin.badge color="red">Expired</x-admin.badge>
                                         @break
                                     @case('disabled')
-                                        <x-admin.badge color="yellow">Nonaktif</x-admin.badge>
+                                        <x-admin.badge color="gray">Nonaktif</x-admin.badge>
                                         @break
                                 @endswitch
                             </td>
@@ -259,40 +267,91 @@
 
 @push('scripts')
 <script>
-    (function () {
-        var checkAll   = document.getElementById('check-all');
-        var checkboxes = document.querySelectorAll('.voucher-checkbox');
-        var btnPrint   = document.getElementById('btn-print-selected');
-        var btnLabel   = document.getElementById('btn-print-label');
+(function () {
+    var checkAll   = document.getElementById('check-all');
+    var checkboxes = document.querySelectorAll('.voucher-checkbox');
+    var btnPrint   = document.getElementById('btn-print-selected');
+    var btnLabel   = document.getElementById('btn-print-label');
+    var banner     = document.getElementById('select-all-banner');
+    var bannerText = document.getElementById('banner-text');
+    var btnAllPages= document.getElementById('btn-select-all-pages');
 
-        function updatePrintBtn() {
-            var selected = document.querySelectorAll('.voucher-checkbox:checked');
-            if (selected.length > 0) {
-                btnPrint.classList.remove('hidden');
-                btnLabel.textContent = 'Print Terpilih (' + selected.length + ')';
-            } else {
-                btnPrint.classList.add('hidden');
-            }
-            checkAll.indeterminate = selected.length > 0 && selected.length < checkboxes.length;
-            checkAll.checked = selected.length === checkboxes.length && checkboxes.length > 0;
+    // Data dari server
+    var totalAll   = {{ $vouchers->total() }};       // total semua hasil filter
+    var pageCount  = {{ $vouchers->count() }};        // jumlah di halaman ini
+    var hasPages   = totalAll > pageCount;
+
+    // Filter params aktif
+    var filterParams = new URLSearchParams({
+        @if($status) status: '{{ $status }}', @endif
+        @if($type)   type:   '{{ $type }}',   @endif
+        @if($search) search: '{{ $search }}', @endif
+    }).toString();
+
+    var allPagesSelected = false;
+
+    function updateUI() {
+        var checked = document.querySelectorAll('.voucher-checkbox:checked').length;
+
+        // Tombol print
+        var count = allPagesSelected ? totalAll : checked;
+        if (count > 0) {
+            btnPrint.classList.remove('hidden');
+            btnLabel.textContent = 'Print Terpilih (' + count + ')';
+        } else {
+            btnPrint.classList.add('hidden');
         }
 
-        checkAll.addEventListener('change', function () {
-            checkboxes.forEach(function (cb) { cb.checked = checkAll.checked; });
-            updatePrintBtn();
-        });
+        // Indeterminate state
+        checkAll.indeterminate = !allPagesSelected && checked > 0 && checked < pageCount;
+        checkAll.checked = allPagesSelected || (checked === pageCount && pageCount > 0);
 
-        checkboxes.forEach(function (cb) {
-            cb.addEventListener('change', updatePrintBtn);
-        });
+        // Banner lintas halaman
+        if (allPagesSelected) {
+            banner.classList.remove('hidden');
+            bannerText.textContent = 'Semua ' + totalAll + ' voucher dipilih.';
+            btnAllPages.textContent = 'Batalkan';
+        } else if (checked === pageCount && hasPages) {
+            banner.classList.remove('hidden');
+            bannerText.textContent = pageCount + ' voucher di halaman ini dipilih.';
+            btnAllPages.textContent = 'Pilih semua ' + totalAll + ' hasil →';
+        } else {
+            banner.classList.add('hidden');
+            allPagesSelected = false;
+        }
+    }
 
-        window.printSelected = function () {
+    checkAll.addEventListener('change', function () {
+        allPagesSelected = false;
+        checkboxes.forEach(function (cb) { cb.checked = checkAll.checked; });
+        updateUI();
+    });
+
+    checkboxes.forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            allPagesSelected = false;
+            updateUI();
+        });
+    });
+
+    btnAllPages.addEventListener('click', function () {
+        allPagesSelected = !allPagesSelected;
+        updateUI();
+    });
+
+    window.printSelected = function () {
+        var printUrl = '{{ route('admin.vouchers.print') }}';
+        if (allPagesSelected) {
+            // Kirim filter params ke controller, bukan IDs
+            var params = 'print_all=1' + (filterParams ? '&' + filterParams : '');
+            window.open(printUrl + '?' + params, '_blank');
+        } else {
             var ids = Array.from(document.querySelectorAll('.voucher-checkbox:checked'))
-                           .map(function (cb) { return cb.value; })
-                           .join(',');
+                          .map(function (cb) { return cb.value; }).join(',');
             if (!ids) return;
-            window.open('{{ route('admin.vouchers.print') }}?ids=' + ids, '_blank');
-        };
-    })();
+            window.open(printUrl + '?ids=' + ids, '_blank');
+        }
+    };
+})();
 </script>
 @endpush

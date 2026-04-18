@@ -31,15 +31,15 @@ Dibangun dengan **Laravel 13**, **Tailwind CSS**, dan **Alpine.js**.
 
 ### Fitur Utama
 
-| Modul | Deskripsi |
-|-------|-----------|
-| **Dashboard** | Statistik ringkas: total user aktif, voucher tersedia, log login terbaru |
-| **User Hotspot** | CRUD user RADIUS, toggle aktif/nonaktif, reset password |
+| Modul               | Deskripsi                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| **Dashboard**       | Statistik ringkas: total user aktif, voucher tersedia, log login terbaru                      |
+| **User Hotspot**    | CRUD user RADIUS, toggle aktif/nonaktif, reset password                                       |
 | **Paket / Profile** | Kelola grup RADIUS (`radgroupcheck`, `radgroupreply`) — kecepatan, bandwidth, profil MikroTik |
-| **Voucher** | Generate voucher batch, cetak kartu, status aktif/expired/disabled |
-| **Log Hotspot** | Riwayat login/logout dari `radpostauth` lengkap dengan NAS/IP |
-| **Log Aktivitas** | Audit trail semua aksi admin (hanya role admin) |
-| **Profil Admin** | Update nama, email, dan password akun panel |
+| **Voucher**         | Generate voucher batch, cetak kartu, status aktif/expired/disabled                            |
+| **Log Hotspot**     | Riwayat login/logout dari `radpostauth` lengkap dengan NAS/IP                                 |
+| **Log Aktivitas**   | Audit trail semua aksi admin (hanya role admin)                                               |
+| **Profil Admin**    | Update nama, email, dan password akun panel                                                   |
 
 ### Role System
 
@@ -52,15 +52,15 @@ Dibangun dengan **Laravel 13**, **Tailwind CSS**, dan **Alpine.js**.
 
 ### Software Wajib
 
-| Software | Versi Minimum | Catatan |
-|----------|---------------|---------|
-| **PHP** | 8.3+ | Dengan ekstensi: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `fileinfo`, `bcmath` |
-| **Composer** | 2.x | Dependency manager PHP |
-| **MySQL / MariaDB** | MySQL 8.0+ / MariaDB 10.6+ | Database utama |
-| **Node.js** | 18+ | Build asset frontend |
-| **npm** | 9+ | Ikut bersama Node.js |
-| **Nginx** atau **Apache** | Terbaru | Web server |
-| **FreeRADIUS** | 3.0+ | RADIUS server — harus berbagi database yang sama |
+| Software                  | Versi Minimum              | Catatan                                                                                                |
+| ------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **PHP**                   | 8.3+                       | Dengan ekstensi: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `fileinfo`, `bcmath` |
+| **Composer**              | 2.x                        | Dependency manager PHP                                                                                 |
+| **MySQL / MariaDB**       | MySQL 8.0+ / MariaDB 10.6+ | Database utama                                                                                         |
+| **Node.js**               | 18+                        | Build asset frontend                                                                                   |
+| **npm**                   | 9+                         | Ikut bersama Node.js                                                                                   |
+| **Nginx** atau **Apache** | Terbaru                    | Web server                                                                                             |
+| **FreeRADIUS**            | 3.0+                       | RADIUS server — harus berbagi database yang sama                                                       |
 
 ### Cek Versi di Server
 
@@ -403,15 +403,15 @@ sudo systemctl reload apache2
 
 Panel ini berbagi database MySQL dengan FreeRADIUS. Tabel yang dipakai bersama:
 
-| Tabel | Dikelola oleh | Keterangan |
-|-------|--------------|-----------|
-| `radcheck` | Panel (per user) | Atribut autentikasi per user (password, expiry) |
-| `radreply` | Panel (per user) | Atribut reply per user |
-| `radusergroup` | Panel | Mapping user ke grup/paket |
-| `radgroupcheck` | Panel (paket) | Atribut autentikasi per grup |
-| `radgroupreply` | Panel (paket) | Atribut reply per grup (kecepatan, dll) |
-| `radpostauth` | FreeRADIUS (tulis) | Log setiap percobaan autentikasi |
-| `radacct` | FreeRADIUS (tulis) | Log sesi aktif/selesai |
+| Tabel           | Dikelola oleh      | Keterangan                                      |
+| --------------- | ------------------ | ----------------------------------------------- |
+| `radcheck`      | Panel (per user)   | Atribut autentikasi per user (password, expiry) |
+| `radreply`      | Panel (per user)   | Atribut reply per user                          |
+| `radusergroup`  | Panel              | Mapping user ke grup/paket                      |
+| `radgroupcheck` | Panel (paket)      | Atribut autentikasi per grup                    |
+| `radgroupreply` | Panel (paket)      | Atribut reply per grup (kecepatan, dll)         |
+| `radpostauth`   | FreeRADIUS (tulis) | Log setiap percobaan autentikasi                |
+| `radacct`       | FreeRADIUS (tulis) | Log sesi aktif/selesai                          |
 
 ### Patch Query Postauth FreeRADIUS
 
@@ -477,10 +477,10 @@ sudo crontab -u www-data -l
 
 Akun dibuat oleh `AdminSeeder`. Segera ganti password setelah install pertama.
 
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | `nazrin` | `1100` |
-| Operator | `sukmo` | `9090` |
+| Role     | Username | Password |
+| -------- | -------- | -------- |
+| Admin    | `nazrin` | `1100`   |
+| Operator | `sukmo`  | `9090`   |
 
 ### Cara Ganti Password
 
@@ -751,4 +751,4 @@ php artisan optimize
 
 ---
 
-*ZeroNet &copy; 2026 — Panel Manajemen Hotspot FreeRADIUS*
+_ZeroNet &copy; 2026 — Panel Manajemen Hotspot FreeRADIUS_

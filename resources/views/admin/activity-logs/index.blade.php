@@ -7,7 +7,7 @@
 
     <x-admin.page-header
         title="Log Aktivitas"
-        description="Riwayat semua aksi yang dilakukan oleh admin dan operator panel."/>
+        description="Riwayat semua aksi yang dilakukan oleh admin dan operator panel ZeroNet."/>
 
     <x-admin.table>
 

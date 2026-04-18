@@ -6,6 +6,7 @@ use App\Models\RadCheck;
 use App\Models\RadGroupCheck;
 use App\Models\RadReply;
 use App\Models\RadUserGroup;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,21 +17,25 @@ class RadiusUserService
      * Daftar user hotspot dengan search + pagination manual.
      * Sumber data: radcheck (username unik dengan attribute Cleartext-Password).
      */
-    public function paginate(string $search = '', int $perPage = 15): LengthAwarePaginator
+    public function paginate(string $search = '', int $perPage = 15, string $group = ''): LengthAwarePaginator
     {
         $query = RadCheck::query()
-            ->select('username')
+            ->select('radcheck.username')
             ->where('attribute', 'Cleartext-Password');
 
-        if ($search) {
-            $query->where('username', 'like', "%{$search}%");
+        if ($group) {
+            $query->join('radusergroup', 'radcheck.username', '=', 'radusergroup.username')
+                  ->where('radusergroup.groupname', $group);
         }
 
-        // Ambil username unik
+        if ($search) {
+            $query->where('radcheck.username', 'like', "%{$search}%");
+        }
+
         $query->distinct();
 
-        $total    = (clone $query)->count();
-        $page     = LengthAwarePaginator::resolveCurrentPage();
+        $total     = (clone $query)->count();
+        $page      = LengthAwarePaginator::resolveCurrentPage();
         $usernames = $query->forPage($page, $perPage)->pluck('username');
 
         // Enrich dengan data group dan expiry
@@ -60,7 +65,7 @@ class RadiusUserService
 
         $group = RadUserGroup::where('username', $username)->value('groupname');
 
-        $expiry = RadCheck::where('username', $username)
+        $expiryRaw = RadCheck::where('username', $username)
             ->where('attribute', 'Expiration')
             ->value('value');
 
@@ -69,11 +74,12 @@ class RadiusUserService
             ->value('value');
 
         return [
-            'username'  => $username,
-            'password'  => $password,
-            'group'     => $group,
-            'expiry'    => $expiry,
-            'max_down'  => $maxData,
+            'username'     => $username,
+            'password'     => $password,
+            'group'        => $group,
+            'expiry'       => $expiryRaw ? Carbon::parse($expiryRaw)->format('d M Y') : '-',
+            'expiry_input' => $expiryRaw ? Carbon::parse($expiryRaw)->format('Y-m-d') : '',
+            'max_down'     => $maxData,
         ];
     }
 
@@ -100,13 +106,13 @@ class RadiusUserService
                 ]);
             }
 
-            // Tanggal expire opsional
+            // Tanggal expire opsional — simpan dalam format FreeRADIUS: "d M Y 23:59:59"
             if (! empty($data['expiry'])) {
                 RadCheck::create([
                     'username'  => $data['username'],
                     'attribute' => 'Expiration',
                     'op'        => ':=',
-                    'value'     => $data['expiry'],
+                    'value'     => self::toRadiusDate($data['expiry']),
                 ]);
             }
         });
@@ -136,14 +142,14 @@ class RadiusUserService
                 ]);
             }
 
-            // Update expiry
+            // Update expiry — simpan dalam format FreeRADIUS: "d M Y 23:59:59"
             RadCheck::where('username', $username)->where('attribute', 'Expiration')->delete();
             if (! empty($data['expiry'])) {
                 RadCheck::create([
                     'username'  => $username,
                     'attribute' => 'Expiration',
                     'op'        => ':=',
-                    'value'     => $data['expiry'],
+                    'value'     => self::toRadiusDate($data['expiry']),
                 ]);
             }
         });
@@ -199,25 +205,42 @@ class RadiusUserService
     }
 
     /**
-     * Ambil daftar group yang tersedia.
+     * Ambil daftar group dari UNION radgroupcheck + radgroupreply,
+     * sama seperti logika panel lama — agar profil lawas tetap muncul.
      */
     public function availableGroups(): Collection
     {
-        return RadGroupCheck::distinct()->pluck('groupname')->sort()->values();
+        $rows = DB::select('
+            SELECT groupname FROM radgroupcheck
+            UNION
+            SELECT groupname FROM radgroupreply
+            ORDER BY groupname
+        ');
+
+        return collect($rows)->pluck('groupname')->values();
     }
 
     private function buildUserData(string $username): array
     {
-        $group  = RadUserGroup::where('username', $username)->value('groupname');
-        $expiry = RadCheck::where('username', $username)
+        $group     = RadUserGroup::where('username', $username)->value('groupname');
+        $expiryRaw = RadCheck::where('username', $username)
             ->where('attribute', 'Expiration')
             ->value('value');
 
         return [
             'username' => $username,
             'group'    => $group ?? '-',
-            'expiry'   => $expiry ?? '-',
+            'expiry'   => $expiryRaw ? Carbon::parse($expiryRaw)->format('d M Y') : '-',
             'active'   => $this->isActive($username),
         ];
+    }
+
+    /**
+     * Konversi input date dari form (Y-m-d) ke format FreeRADIUS "d M Y 23:59:59".
+     * Terima juga "d M Y" dan "d M Y H:i:s" agar tetap aman.
+     */
+    private static function toRadiusDate(string $date): string
+    {
+        return Carbon::parse($date)->setTime(23, 59, 59)->format('d M Y H:i:s');
     }
 }

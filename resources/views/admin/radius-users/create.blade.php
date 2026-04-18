@@ -92,17 +92,15 @@
                     <label for="expiry" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Tanggal Expire
                     </label>
-                    <input type="text" id="expiry" name="expiry" value="{{ old('expiry') }}"
+                    <input type="date" id="expiry" name="expiry" value="{{ old('expiry') }}"
                         class="w-full px-3 py-2 text-sm rounded-lg border transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                   {{ $errors->has('expiry') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-brand-500' }}
-                                  focus:outline-none focus:ring-2 focus:border-transparent"
-                        placeholder="31 Dec 2025">
+                                  focus:outline-none focus:ring-2 focus:border-transparent">
                     @error('expiry')
                         <p class="mt-1.5 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Format: <code class="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">DD Mon YYYY</code>
-                        — kosongkan jika tidak ada expire.
+                        Kosongkan jika tidak ada expire. Waktu otomatis disimpan sebagai 23:59:59.
                     </p>
                 </div>
 

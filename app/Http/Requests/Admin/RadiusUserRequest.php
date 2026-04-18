@@ -38,7 +38,7 @@ class RadiusUserRequest extends FormRequest
                 'max:128',
             ],
             'group'  => ['nullable', 'string', 'max:64'],
-            'expiry' => ['nullable', 'date_format:d M Y'],
+            'expiry' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 
@@ -50,7 +50,7 @@ class RadiusUserRequest extends FormRequest
             'username.max'          => 'Username maksimal 64 karakter.',
             'password.required'     => 'Password wajib diisi.',
             'password.min'          => 'Password tidak boleh kosong.',
-            'expiry.date_format'    => 'Format tanggal expire: DD Mon YYYY (contoh: 31 Dec 2025).',
+            'expiry.date_format'    => 'Tanggal expire tidak valid.',
         ];
     }
 

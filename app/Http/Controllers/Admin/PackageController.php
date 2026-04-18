@@ -85,4 +85,28 @@ class PackageController extends Controller
             ->route('admin.packages.index')
             ->with('success', "Paket \"{$groupname}\" berhasil dihapus.");
     }
+
+    /**
+     * Auto-import profil lama dari radius tables ke packages table,
+     * lalu redirect ke form edit normal.
+     */
+    public function legacyEdit(string $groupname): RedirectResponse
+    {
+        if (! $this->service->existsInRadius($groupname)) {
+            abort(404, 'Profil tidak ditemukan.');
+        }
+
+        // Sudah diimport sebelumnya? Langsung ke edit.
+        $package = Package::where('groupname', $groupname)->first()
+            ?? $this->service->importFromRadius($groupname);
+
+        ActivityLogService::log(
+            'create',
+            "mengimpor profil dari panel lama: {$groupname}",
+            'package',
+            $groupname,
+        );
+
+        return redirect()->route('admin.packages.edit', $package);
+    }
 }

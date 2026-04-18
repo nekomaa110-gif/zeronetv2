@@ -7,7 +7,7 @@
 
     <x-admin.page-header
         title="Log User Hotspot"
-        description="Riwayat autentikasi user hotspot dari FreeRADIUS (radpostauth)."/>
+        description="Riwayat autentikasi user hotspot ZeroNet."/>
 
     <x-admin.table>
 

@@ -17,10 +17,11 @@ class RadiusUserController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->trim()->toString();
-        $users  = $this->service->paginate($search, 15);
+        $group  = $request->string('group')->trim()->toString();
+        $users  = $this->service->paginate($search, 15, $group);
         $groups = $this->service->availableGroups();
 
-        return view('admin.radius-users.index', compact('users', 'search', 'groups'));
+        return view('admin.radius-users.index', compact('users', 'search', 'group', 'groups'));
     }
 
     public function create(): View

@@ -41,17 +41,54 @@ class PackageService
 
     public function all(): Collection
     {
-        return Package::withCount('attributes')
-            ->orderBy('groupname')
+        // Sumber utama: UNION dari radius tables (logika panel lama)
+        $radiusGroupNames = collect(DB::select('
+            SELECT groupname FROM radgroupcheck
+            UNION
+            SELECT groupname FROM radgroupreply
+            ORDER BY groupname
+        '))->pluck('groupname');
+
+        // Index packages yang sudah terdaftar di panel baru
+        $packages = Package::withCount('attributes')
             ->get()
-            ->map(fn(Package $pkg) => [
-                'id'              => $pkg->id,
-                'groupname'       => $pkg->groupname,
-                'description'     => $pkg->description,
-                'is_active'       => $pkg->is_active,
-                'attribute_count' => $pkg->attributes_count,
-                'user_count'      => RadUserGroup::where('groupname', $pkg->groupname)->count(),
-            ]);
+            ->keyBy('groupname');
+
+        return $radiusGroupNames->map(function (string $groupname) use ($packages) {
+            $pkg = $packages->get($groupname);
+
+            $userCount = RadUserGroup::where('groupname', $groupname)->count();
+
+            if ($pkg) {
+                // Profil yang sudah dikelola panel baru — data penuh
+                return [
+                    'id'              => $pkg->id,
+                    'groupname'       => $pkg->groupname,
+                    'description'     => $pkg->description,
+                    'is_active'       => $pkg->is_active,
+                    'attribute_count' => $pkg->attributes_count,
+                    'user_count'      => $userCount,
+                    'is_legacy'       => false,
+                ];
+            }
+
+            // Profil dari panel lama — derive status dari Auth-Type di radgroupcheck
+            $authType   = RadGroupCheck::where('groupname', $groupname)
+                ->where('attribute', 'Auth-Type')
+                ->value('value');
+            $attrCount  = RadGroupCheck::where('groupname', $groupname)->count()
+                        + RadGroupReply::where('groupname', $groupname)->count();
+
+            return [
+                'id'              => null,
+                'groupname'       => $groupname,
+                'description'     => null,
+                'is_active'       => $authType === 'Accept',
+                'attribute_count' => $attrCount,
+                'user_count'      => $userCount,
+                'is_legacy'       => true,
+            ];
+        })->values();
     }
 
     public function find(Package $package): Package
@@ -112,6 +149,71 @@ class PackageService
     public function exists(string $groupname): bool
     {
         return Package::where('groupname', $groupname)->exists();
+    }
+
+    public function existsInRadius(string $groupname): bool
+    {
+        return RadGroupCheck::where('groupname', $groupname)->exists()
+            || RadGroupReply::where('groupname', $groupname)->exists();
+    }
+
+    /**
+     * Import profil lama (dari radius tables) ke tabel packages.
+     * Radius tables TIDAK disentuh — tetap utuh sampai user klik Simpan.
+     */
+    public function importFromRadius(string $groupname): Package
+    {
+        return DB::transaction(function () use ($groupname) {
+            $authType = RadGroupCheck::where('groupname', $groupname)
+                ->where('attribute', 'Auth-Type')
+                ->value('value');
+
+            // Tidak ada Auth-Type = anggap aktif (default panel lama selalu buat Auth-Type Accept)
+            $isActive = ($authType === null) || ($authType === 'Accept');
+
+            $package = Package::create([
+                'groupname'   => $groupname,
+                'description' => null,
+                'is_active'   => $isActive,
+            ]);
+
+            $sortOrder = 0;
+
+            // Import dari radgroupcheck (kecuali Auth-Type — dikelola lewat is_active)
+            RadGroupCheck::where('groupname', $groupname)
+                ->where('attribute', '!=', 'Auth-Type')
+                ->get()
+                ->each(function ($row) use ($package, &$sortOrder) {
+                    if (in_array($row->attribute, self::TIME_BLOCKED, true)) {
+                        return;
+                    }
+                    $package->attributes()->create([
+                        'attribute'    => $row->attribute,
+                        'op'           => $row->op,
+                        'value'        => $row->value,
+                        'target_table' => 'radgroupcheck',
+                        'sort_order'   => $sortOrder++,
+                    ]);
+                });
+
+            // Import dari radgroupreply
+            RadGroupReply::where('groupname', $groupname)
+                ->get()
+                ->each(function ($row) use ($package, &$sortOrder) {
+                    if (in_array($row->attribute, self::TIME_BLOCKED, true)) {
+                        return;
+                    }
+                    $package->attributes()->create([
+                        'attribute'    => $row->attribute,
+                        'op'           => $row->op,
+                        'value'        => $row->value,
+                        'target_table' => 'radgroupreply',
+                        'sort_order'   => $sortOrder++,
+                    ]);
+                });
+
+            return $package;
+        });
     }
 
     // ─── Private helpers ────────────────────────────────────────────────────
