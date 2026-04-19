@@ -7,7 +7,7 @@
 
     <x-admin.page-header
         title="Generate Voucher"
-        description="Buat voucher hotspot baru dengan kode unik otomatis.">
+        description="Buat voucher baru dan print dengan otomatis.">
         <x-slot:actions>
             <a href="{{ route('admin.vouchers.index') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors">
@@ -24,7 +24,7 @@
 
             <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Form Generate Voucher</h3>
-                <p class="text-xs text-gray-400 mt-0.5">Kode 8-karakter dibuat otomatis (format XXXX-XXXX), unik, dan langsung disinkronkan ke FreeRADIUS.</p>
+                <p class="text-xs text-gray-400 mt-0.5">Kode 8-karakter dibuat otomatis,dan langsung disinkronkan ke Database ZeroNet.</p>
             </div>
 
             <form method="POST" action="{{ route('admin.vouchers.store') }}" class="px-6 py-5 space-y-6">
@@ -91,7 +91,7 @@
                     <div class="flex items-center gap-0">
                         <input type="text" id="prefix" name="prefix"
                                value="{{ old('prefix') }}"
-                               placeholder="Contoh: CAFE"
+                               placeholder="Contoh: ZERO"
                                maxlength="20"
                                class="w-36 px-3 py-2.5 text-sm rounded-l-lg border {{ $errors->has('prefix') ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-brand-500' }}
                                       border-r-0 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 uppercase

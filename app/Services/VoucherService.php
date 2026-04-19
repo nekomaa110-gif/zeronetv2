@@ -225,7 +225,19 @@ class VoucherService
                 });
         }
 
-        // 2. Tandai expired yang sudah melewati batas waktu
+        // 2. Koreksi Expiration di radcheck untuk voucher active yang datanya tidak sinkron
+        //    (terjadi saat migrasi dari sistem lama atau data radcheck ditulis manual)
+        Voucher::where('status', 'active')
+            ->whereNotNull('expired_at')
+            ->each(function (Voucher $voucher) {
+                $expected = Carbon::parse($voucher->expired_at)->format('d M Y H:i:s');
+                RadCheck::where('username', $voucher->code)
+                    ->where('attribute', 'Expiration')
+                    ->where('value', '!=', $expected)
+                    ->update(['op' => ':=', 'value' => $expected]);
+            });
+
+        // 3. Tandai expired yang sudah melewati batas waktu
         Voucher::where('status', 'active')
             ->whereNotNull('expired_at')
             ->where('expired_at', '<', now())

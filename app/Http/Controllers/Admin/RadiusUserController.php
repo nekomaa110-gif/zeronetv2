@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RadiusUserRequest;
+use App\Models\Voucher;
 use App\Services\ActivityLogService;
 use App\Services\RadiusUserService;
 use Illuminate\Http\RedirectResponse;
@@ -60,6 +61,13 @@ class RadiusUserController extends Controller
         $data = $request->validated();
         $this->service->update($username, $data);
 
+        // Sync expired_at ke tabel vouchers jika username ini adalah voucher
+        $voucher = Voucher::where('code', $username)->first();
+        if ($voucher && ! empty($data['expiry'])) {
+            $newExpiry = \Carbon\Carbon::parse($data['expiry'])->setTime(23, 59, 59);
+            $voucher->update(['expired_at' => $newExpiry]);
+        }
+
         ActivityLogService::log(
             'update',
             "mengupdate user hotspot: {$username}",
@@ -76,6 +84,8 @@ class RadiusUserController extends Controller
     {
         $this->service->delete($username);
 
+        Voucher::where('code', $username)->delete();
+
         ActivityLogService::log(
             'delete',
             "menghapus user hotspot: {$username}",
@@ -83,15 +93,25 @@ class RadiusUserController extends Controller
             $username
         );
 
-        return redirect()
-            ->route('admin.radius-users.index')
-            ->with('success', "User {$username} berhasil dihapus.");
+        return back()->with('success', "User {$username} berhasil dihapus.");
     }
 
     public function toggle(string $username): RedirectResponse
     {
         $nowActive = $this->service->toggle($username);
         $status    = $nowActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        // Sync status ke tabel vouchers jika username ini adalah voucher
+        $voucher = Voucher::where('code', $username)->first();
+        if ($voucher && ! in_array($voucher->status, ['expired'])) {
+            if ($nowActive) {
+                $voucher->update([
+                    'status' => $voucher->first_login_at ? 'active' : 'ready',
+                ]);
+            } else {
+                $voucher->update(['status' => 'disabled']);
+            }
+        }
 
         ActivityLogService::log(
             'update',

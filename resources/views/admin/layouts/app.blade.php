@@ -204,6 +204,22 @@
     </div>
 
     <script>
+        function pageAutoRefresh(seconds) {
+            return {
+                remaining: seconds,
+                total: seconds,
+                _timer: null,
+                init() {
+                    this._timer = setInterval(() => {
+                        this.remaining--;
+                        if (this.remaining <= 0) location.reload();
+                    }, 1000);
+                },
+                reset() { this.remaining = this.total; },
+                get pct() { return (this.remaining / this.total) * 100; }
+            };
+        }
+
         function darkToggle() {
             return {
                 isDark: document.documentElement.classList.contains('dark'),
@@ -222,6 +238,7 @@
         }
     </script>
     @stack('scripts')
+    @stack('overlays')
 </body>
 
 </html>

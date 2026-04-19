@@ -6,6 +6,7 @@ use App\Models\RadCheck;
 use App\Models\RadGroupCheck;
 use App\Models\RadReply;
 use App\Models\RadUserGroup;
+use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -38,8 +39,29 @@ class RadiusUserService
         $page      = LengthAwarePaginator::resolveCurrentPage();
         $usernames = $query->forPage($page, $perPage)->pluck('username');
 
-        // Enrich dengan data group dan expiry
-        $items = $usernames->map(fn ($username) => $this->buildUserData($username));
+        // Batch-fetch semua data yang dibutuhkan (menghindari N+1)
+        $groups         = RadUserGroup::whereIn('username', $usernames)->pluck('groupname', 'username');
+        $radExpiries    = RadCheck::whereIn('username', $usernames)->where('attribute', 'Expiration')->pluck('value', 'username');
+        $blocked        = RadCheck::whereIn('username', $usernames)->where('attribute', 'Auth-Type')->where('value', 'Reject')->pluck('username')->flip();
+        $voucherExpiries = Voucher::whereIn('code', $usernames)->pluck('expired_at', 'code');
+
+        $items = $usernames->map(function ($username) use ($groups, $radExpiries, $blocked, $voucherExpiries) {
+            // Prefer vouchers.expired_at (authoritative) over radcheck.Expiration
+            if ($voucherExpiries->has($username) && $voucherExpiries[$username]) {
+                $expiry = Carbon::parse($voucherExpiries[$username])->format('d M Y H:i');
+            } elseif ($radExpiries->has($username)) {
+                $expiry = Carbon::parse($radExpiries[$username])->format('d M Y');
+            } else {
+                $expiry = '-';
+            }
+
+            return [
+                'username' => $username,
+                'group'    => $groups->get($username, '-'),
+                'expiry'   => $expiry,
+                'active'   => ! $blocked->has($username),
+            ];
+        });
 
         return new LengthAwarePaginator(
             $items,
@@ -218,21 +240,6 @@ class RadiusUserService
         ');
 
         return collect($rows)->pluck('groupname')->values();
-    }
-
-    private function buildUserData(string $username): array
-    {
-        $group     = RadUserGroup::where('username', $username)->value('groupname');
-        $expiryRaw = RadCheck::where('username', $username)
-            ->where('attribute', 'Expiration')
-            ->value('value');
-
-        return [
-            'username' => $username,
-            'group'    => $group ?? '-',
-            'expiry'   => $expiryRaw ? Carbon::parse($expiryRaw)->format('d M Y') : '-',
-            'active'   => $this->isActive($username),
-        ];
     }
 
     /**

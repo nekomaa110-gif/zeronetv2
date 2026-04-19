@@ -207,3 +207,23 @@
     </x-admin.table>
 
 @endsection
+
+@push('overlays')
+<div x-data="pageAutoRefresh(60)" x-init="init()"
+     @click="reset()" title="Klik untuk reset timer"
+     class="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-1 cursor-pointer select-none group">
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs
+                bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+                text-gray-400 dark:text-gray-500 shadow-sm
+                group-hover:border-brand-400 group-hover:text-brand-500 transition-colors">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span x-text="remaining + 'd'"></span>
+    </div>
+    <div class="w-full h-0.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div class="h-full bg-brand-500 transition-[width] duration-1000 ease-linear"
+             :style="'width:' + pct + '%'"></div>
+    </div>
+</div>
+@endpush

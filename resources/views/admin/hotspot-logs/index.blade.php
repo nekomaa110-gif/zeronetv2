@@ -9,6 +9,9 @@
         title="Log User Hotspot"
         description="Riwayat autentikasi user hotspot ZeroNet."/>
 
+    @php $hasFilter = (bool)($search || $status || $dateFrom || $dateTo); @endphp
+    @php $liveMode  = !$hasFilter && $logs->currentPage() === 1; @endphp
+
     <x-admin.table>
 
         {{-- Filter bar --}}
@@ -57,18 +60,45 @@
                         Filter
                     </button>
 
-                    @if($search || $status || $dateFrom || $dateTo)
+                    @if($hasFilter)
                         <a href="{{ route('admin.hotspot-logs.index') }}"
                            class="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline underline-offset-2">
                             Reset
                         </a>
                     @endif
+
+                    {{-- Live indicator (hanya muncul di mode live: halaman 1, tanpa filter) --}}
+                    @if($liveMode)
+                        <div class="ml-auto flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            Live
+                        </div>
+                    @endif
                 </div>
             </form>
         </div>
 
-        {{-- Tabel --}}
-        <div class="overflow-x-auto">
+        {{-- Tabel dengan AJAX live polling --}}
+        <div class="overflow-x-auto"
+             @if($liveMode)
+             x-data="{
+                 lastId: {{ $logs->first()?->id ?? 0 }},
+                 async poll() {
+                     if (!this.lastId) return;
+                     try {
+                         const { data } = await axios.get('{{ route('admin.hotspot-logs.poll') }}', { params: { after: this.lastId } });
+                         if (data.count > 0) {
+                             this.$refs.tbody.insertAdjacentHTML('afterbegin', data.html);
+                             this.lastId = data.max_id;
+                         }
+                     } catch(e) {}
+                 },
+                 init() { setInterval(() => this.poll(), 15000); }
+             }"
+             @endif>
             <table class="w-full text-sm text-left">
                 <thead class="bg-gray-50 dark:bg-gray-700/60 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     <tr>
@@ -78,61 +108,19 @@
                         <th class="px-5 py-3 font-medium">Jam</th>
                         <th class="px-5 py-3 font-medium text-center">Status</th>
                         <th class="px-5 py-3 font-medium">Keterangan</th>
-                        <th class="px-5 py-3 font-medium">NAS / IP</th>
+                        <th class="px-5 py-3 font-medium">NAS / IP Klien</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700"
+                       @if($liveMode) x-ref="tbody" @endif>
                     @forelse($logs as $log)
-                        @php $success = str_contains(strtolower($log->reply), 'accept'); @endphp
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-
-                            <td class="px-5 py-3.5 text-gray-400 dark:text-gray-500 text-xs">
-                                {{ $logs->firstItem() + $loop->index }}
-                            </td>
-
-                            <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-white">
-                                {{ $log->username }}
-                            </td>
-
-                            <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
-                                {{ $log->authdate?->format('d M Y') }}
-                            </td>
-
-                            <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400 text-xs font-mono">
-                                {{ $log->authdate?->format('H:i:s') }}
-                            </td>
-
-                            <td class="px-5 py-3.5 text-center">
-                                @if($success)
-                                    <x-admin.badge color="green" :dot="true">Berhasil</x-admin.badge>
-                                @else
-                                    <x-admin.badge color="red" :dot="true">Gagal</x-admin.badge>
-                                @endif
-                            </td>
-
-                            <td class="px-5 py-3.5 text-xs">
-                                @if($success)
-                                    <span class="text-green-600 dark:text-green-400">Login berhasil</span>
-                                @elseif($log->reply)
-                                    <span class="text-red-500 dark:text-red-400">{{ $log->reply }}</span>
-                                @else
-                                    <span class="text-gray-300 dark:text-gray-600">—</span>
-                                @endif
-                            </td>
-
-                            <td class="px-5 py-3.5 text-xs text-gray-500 dark:text-gray-400 font-mono">
-                                @php
-                                    $ip = $log->nasipaddress ?? '';
-                                    if ($ip === 'localhost') $ip = '127.0.0.1';
-                                @endphp
-                                @if($ip !== '')
-                                    {{ $ip }}
-                                @else
-                                    <span class="text-gray-300 dark:text-gray-600">—</span>
-                                @endif
-                            </td>
-
-                        </tr>
+                        @include('admin.hotspot-logs._row', [
+                            'log'           => $log,
+                            'rejectReasons' => $rejectReasons,
+                            'userIps'       => $userIps,
+                            'rowNumber'     => $logs->firstItem() + $loop->index,
+                            'isNew'         => false,
+                        ])
                     @empty
                         <tr>
                             <td colspan="7" class="px-5 py-16 text-center">
@@ -141,13 +129,13 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
                                     <p class="text-sm text-gray-400 dark:text-gray-500">
-                                        @if($search || $status || $dateFrom || $dateTo)
+                                        @if($hasFilter)
                                             Tidak ada log yang cocok dengan filter.
                                         @else
                                             Belum ada log autentikasi.
                                         @endif
                                     </p>
-                                    @if($search || $status || $dateFrom || $dateTo)
+                                    @if($hasFilter)
                                         <a href="{{ route('admin.hotspot-logs.index') }}"
                                            class="text-sm text-brand-600 hover:underline">Reset filter →</a>
                                     @endif
@@ -168,3 +156,18 @@
     </x-admin.table>
 
 @endsection
+
+@push('scripts')
+<style>
+    .log-row-new { animation: logRowFade 5s ease-in-out forwards; }
+    @keyframes logRowFade {
+        0%, 60% { background-color: rgb(240 253 244); }
+        100%     { background-color: transparent; }
+    }
+    .dark .log-row-new { animation: logRowFadeDark 5s ease-in-out forwards; }
+    @keyframes logRowFadeDark {
+        0%, 60% { background-color: rgba(20, 83, 45, 0.15); }
+        100%     { background-color: transparent; }
+    }
+</style>
+@endpush

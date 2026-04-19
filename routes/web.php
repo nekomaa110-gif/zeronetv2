@@ -20,6 +20,7 @@ Route::prefix('admin')
 
         // ── Dashboard (semua role) ────────────────────────────────────────
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
 
         // ── User Hotspot ─────────────────────────────────────────────────
         // Operator: lihat, tambah, edit, toggle (semua kecuali hapus)
@@ -66,6 +67,7 @@ Route::prefix('admin')
 
         // ── Log User Hotspot (radpostauth) ────────────────────────────────
         Route::get('/hotspot-logs', [HotspotLogController::class, 'index'])->name('hotspot-logs.index');
+        Route::get('/hotspot-logs/poll', [HotspotLogController::class, 'poll'])->name('hotspot-logs.poll');
 
         // ── Log Aktivitas (admin only) ────────────────────────────────────
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])
