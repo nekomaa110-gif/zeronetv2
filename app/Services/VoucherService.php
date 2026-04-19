@@ -10,6 +10,7 @@ use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class VoucherService
 {
@@ -146,6 +147,10 @@ class VoucherService
             ['username' => $voucher->code, 'attribute' => 'Auth-Type'],
             ['op' => ':=', 'value' => 'Reject']
         );
+
+        RadCheck::where('username', $voucher->code)
+            ->where('attribute', 'Cleartext-Password')
+            ->update(['value' => Str::random(32)]);
     }
 
     /**
@@ -158,6 +163,17 @@ class VoucherService
         RadCheck::updateOrCreate(
             ['username' => $voucher->code, 'attribute' => 'Auth-Type'],
             ['op' => ':=', 'value' => 'Reject']
+        );
+
+        RadCheck::where('username', $voucher->code)
+            ->where('attribute', 'Cleartext-Password')
+            ->update(['value' => Str::random(32)]);
+
+        // Paksa expiration module reject — bekerja independen dari Auth-Type
+        // (radgroupcheck punya Auth-Type := Accept yang override Reject di radcheck)
+        RadCheck::updateOrCreate(
+            ['username' => $voucher->code, 'attribute' => 'Expiration'],
+            ['op' => ':=', 'value' => '01 Jan 2000 00:00:01']
         );
     }
 
@@ -177,6 +193,23 @@ class VoucherService
         RadCheck::where('username', $voucher->code)
             ->where('attribute', 'Auth-Type')
             ->delete();
+
+        RadCheck::updateOrCreate(
+            ['username' => $voucher->code, 'attribute' => 'Cleartext-Password'],
+            ['op' => ':=', 'value' => $voucher->password]
+        );
+
+        // Restore Expiration yang benar (atau hapus jika voucher belum pernah login)
+        if ($voucher->first_login_at && $voucher->expired_at) {
+            RadCheck::updateOrCreate(
+                ['username' => $voucher->code, 'attribute' => 'Expiration'],
+                ['op' => ':=', 'value' => Carbon::parse($voucher->expired_at)->format('d M Y H:i:s')]
+            );
+        } else {
+            RadCheck::where('username', $voucher->code)
+                ->where('attribute', 'Expiration')
+                ->delete();
+        }
     }
 
     /**
