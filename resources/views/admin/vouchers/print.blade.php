@@ -183,7 +183,6 @@
                         <div class="card-head">
                             <div>
                                 <div class="brand">ZeroNet</div>
-                                <div class="brand-sub">Hotspot Voucher</div>
                             </div>
                             <span class="type-badge">{{ $typeLabels[$v->type] ?? $v->type }}</span>
                         </div>
@@ -214,7 +213,7 @@
                             </div>
                         </div>
 
-                        <div class="card-foot">zeronet.id &middot; hotspot voucher</div>
+                        <div class="card-foot">login http://zero.net</div>
 
                     </div>
                 @endforeach
