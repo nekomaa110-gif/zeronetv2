@@ -62,6 +62,7 @@
                 <x-admin.nav-item route="admin.radius-users.index" icon="users">User Hotspot</x-admin.nav-item>
                 <x-admin.nav-item route="admin.packages.index" icon="package">Paket / Profile</x-admin.nav-item>
                 <x-admin.nav-item route="admin.vouchers.index" icon="voucher">Voucher</x-admin.nav-item>
+                <x-admin.nav-item route="admin.routers.index" icon="router">Manajemen Router</x-admin.nav-item>
                 <div class="my-3 border-t border-gray-700"></div>
                 <x-admin.nav-item route="admin.hotspot-logs.index" icon="hotspot-log">Log Hotspot</x-admin.nav-item>
                 <x-admin.nav-item route="admin.activity-logs.index" icon="log">Log Aktivitas</x-admin.nav-item>

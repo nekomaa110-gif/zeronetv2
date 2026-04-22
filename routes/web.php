@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\HotspotLogController;
 use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\RadiusUserController;
+use App\Http\Controllers\Admin\RouterController;
 use App\Http\Controllers\Admin\VoucherController;
 use Illuminate\Support\Facades\Route;
 
@@ -73,6 +74,19 @@ Route::prefix('admin')
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])
             ->name('activity-logs.index')
             ->middleware('role:admin');
+
+        // ── Router Management ────────────────────────────────────────────
+        Route::get('/routers', [RouterController::class, 'index'])->name('routers.index');
+        Route::get('/routers/{router}', [RouterController::class, 'show'])->name('routers.show');
+        Route::get('/routers/{router}/stats', [RouterController::class, 'stats'])->name('routers.stats');
+        Route::get('/routers/{router}/hotspot-users', [RouterController::class, 'hotspotUsers'])->name('routers.hotspot-users');
+
+        // Admin only: aksi destruktif
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/routers/{router}/disconnect', [RouterController::class, 'disconnect'])->name('routers.disconnect');
+            Route::post('/routers/{router}/reboot', [RouterController::class, 'reboot'])->name('routers.reboot');
+            Route::get('/routers/{router}/backup', [RouterController::class, 'backup'])->name('routers.backup');
+        });
 
         // ── Profil Admin (semua role, akses profil sendiri) ───────────────
         Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
