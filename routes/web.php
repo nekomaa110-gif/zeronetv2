@@ -80,6 +80,7 @@ Route::prefix('admin')
         Route::get('/routers/{router}', [RouterController::class, 'show'])->name('routers.show');
         Route::get('/routers/{router}/stats', [RouterController::class, 'stats'])->name('routers.stats');
         Route::get('/routers/{router}/hotspot-users', [RouterController::class, 'hotspotUsers'])->name('routers.hotspot-users');
+        Route::get('/routers/{router}/traffic', [RouterController::class, 'traffic'])->name('routers.traffic');
 
         // Admin only: aksi destruktif
         Route::middleware('role:admin')->group(function () {

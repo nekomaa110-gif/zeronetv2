@@ -3,25 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
 use App\Models\RadAcct;
 use App\Models\RadCheck;
 use App\Models\Voucher;
+use App\Services\MikrotikService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(private MikrotikService $mikrotik) {}
+
     public function index(): View
     {
-        $stats      = $this->computeStats();
-        $recentLogs = ActivityLog::with('user')
-            ->latest()
-            ->limit(8)
-            ->get();
+        $stats   = $this->computeStats();
+        $routers = collect($this->mikrotik->routers())
+            ->map(fn ($cfg, $id) => ['id' => $id, ...$cfg])
+            ->values();
 
-        return view('admin.dashboard', compact('stats', 'recentLogs'));
+        return view('admin.dashboard', compact('stats', 'routers'));
     }
 
     public function stats(): JsonResponse

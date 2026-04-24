@@ -47,6 +47,18 @@ class RouterController extends Controller
         }
     }
 
+    public function traffic(string $router)
+    {
+        try {
+            return response()->json([
+                'online' => true,
+                ...$this->svc->trafficInterface($router),
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['online' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
     public function hotspotUsers(string $router)
     {
         try {

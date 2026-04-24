@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class MikrotikService
 {
@@ -78,6 +79,53 @@ class MikrotikService
             'total_hdd' => $totalHdd,
             'used_hdd'  => $usedHdd,
             'hdd_pct'   => $totalHdd > 0 ? round($usedHdd / $totalHdd * 100) : 0,
+        ];
+    }
+
+    // ─── Traffic ──────────────────────────────────────────────────────────
+
+    public function trafficInterface(string $id, string $interface = 'ether1'): array
+    {
+        // Fail-fast: kalau router baru saja gagal dihubungi, jangan coba lagi
+        // selama 15 detik. Hemat worker PHP-FPM saat router down.
+        if (Cache::has("router.down.{$id}")) {
+            throw new Exception('Router tidak dapat dihubungi (cached).');
+        }
+
+        try {
+            $res = $this->client($id)->query('/interface/print', ['?name' => $interface]);
+        } catch (Exception $e) {
+            Cache::put("router.down.{$id}", true, 15);
+            throw $e;
+        }
+
+        $data = $res[0] ?? [];
+
+        $rxBytes = (int) ($data['rx-byte'] ?? 0);
+        $txBytes = (int) ($data['tx-byte'] ?? 0);
+        $now     = microtime(true);
+
+        $cacheKey = "traffic.{$id}.{$interface}";
+        $prev     = Cache::get($cacheKey);
+
+        Cache::put($cacheKey, ['rx' => $rxBytes, 'tx' => $txBytes, 'ts' => $now], 120);
+
+        if (!$prev || ($now - $prev['ts']) <= 0) {
+            return ['download' => 0, 'upload' => 0];
+        }
+
+        // Counter reset (interface/router restart) → abaikan sampel ini
+        if ($rxBytes < $prev['rx'] || $txBytes < $prev['tx']) {
+            return ['download' => 0, 'upload' => 0];
+        }
+
+        $elapsed  = $now - $prev['ts'];
+        $download = (int) round(($rxBytes - $prev['rx']) / $elapsed * 8);
+        $upload   = (int) round(($txBytes - $prev['tx']) / $elapsed * 8);
+
+        return [
+            'download' => max(0, $download),
+            'upload'   => max(0, $upload),
         ];
     }
 
