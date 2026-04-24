@@ -228,7 +228,11 @@ class VoucherService
     /**
      * Sinkronisasi dari FreeRADIUS:
      *  1. Aktifkan voucher ready yang sudah login pertama kali (via radpostauth).
-     *  2. Tandai expired pada voucher yang melewati expired_at.
+     *  2. Koreksi Expiration di radcheck untuk voucher active yang tidak sinkron.
+     *  3. Tandai expired pada voucher yang melewati expired_at.
+     *
+     * Dioptimasi: setiap loop menggunakan bulk query (upsert/whereIn)
+     * sehingga total query flat ~8, bukan 7×N.
      *
      * @return array{activated: int, expired: int}
      */
@@ -237,7 +241,7 @@ class VoucherService
         $activated = 0;
         $expired   = 0;
 
-        // 1. Aktifkan voucher yang baru pertama kali berhasil login
+        // ── 1. Aktifkan voucher ready yang sudah login pertama ────────────
         $readyCodes = Voucher::where('status', 'ready')->pluck('code');
 
         if ($readyCodes->isNotEmpty()) {
@@ -249,35 +253,94 @@ class VoucherService
                 ->get()
                 ->keyBy('username');
 
-            Voucher::where('status', 'ready')
-                ->whereIn('code', $firstLogins->keys())
-                ->each(function (Voucher $voucher) use ($firstLogins, &$activated) {
-                    $row = $firstLogins->get($voucher->code);
-                    $this->activate($voucher, Carbon::parse($row->first_login));
-                    $activated++;
-                });
+            if ($firstLogins->isNotEmpty()) {
+                $toActivate = Voucher::where('status', 'ready')
+                    ->whereIn('code', $firstLogins->keys())
+                    ->get(['id', 'code', 'calendar_hours']);
+
+                $voucherRows    = [];
+                $expirationRows = [];
+                $activatedCodes = [];
+
+                foreach ($toActivate as $voucher) {
+                    $firstLogin = Carbon::parse($firstLogins->get($voucher->code)->first_login);
+                    $expiredAt  = $firstLogin->copy()->addHours($voucher->calendar_hours);
+
+                    $voucherRows[] = [
+                        'id'             => $voucher->id,
+                        'status'         => 'active',
+                        'first_login_at' => $firstLogin->toDateTimeString(),
+                        'expired_at'     => $expiredAt->toDateTimeString(),
+                        'updated_at'     => now()->toDateTimeString(),
+                    ];
+                    $expirationRows[] = [
+                        'username'  => $voucher->code,
+                        'attribute' => 'Expiration',
+                        'op'        => ':=',
+                        'value'     => $expiredAt->format('d M Y H:i:s'),
+                    ];
+                    $activatedCodes[] = $voucher->code;
+                }
+
+                DB::table('vouchers')->upsert($voucherRows, ['id'], ['status', 'first_login_at', 'expired_at', 'updated_at']);
+                RadCheck::upsert($expirationRows, ['username', 'attribute'], ['value']);
+                RadCheck::whereIn('username', $activatedCodes)->where('attribute', 'Auth-Type')->delete();
+
+                $activated = count($activatedCodes);
+            }
         }
 
-        // 2. Koreksi Expiration di radcheck untuk voucher active yang datanya tidak sinkron
-        //    (terjadi saat migrasi dari sistem lama atau data radcheck ditulis manual)
-        Voucher::where('status', 'active')
+        // ── 2. Koreksi Expiration untuk voucher active yang tidak sinkron ─
+        $activeVouchers = Voucher::where('status', 'active')
             ->whereNotNull('expired_at')
-            ->each(function (Voucher $voucher) {
-                $expected = Carbon::parse($voucher->expired_at)->format('d M Y H:i:s');
-                RadCheck::where('username', $voucher->code)
-                    ->where('attribute', 'Expiration')
-                    ->where('value', '!=', $expected)
-                    ->update(['op' => ':=', 'value' => $expected]);
-            });
+            ->get(['code', 'expired_at']);
 
-        // 3. Tandai expired yang sudah melewati batas waktu
-        Voucher::where('status', 'active')
+        if ($activeVouchers->isNotEmpty()) {
+            $correctionRows = $activeVouchers->map(fn ($v) => [
+                'username'  => $v->code,
+                'attribute' => 'Expiration',
+                'op'        => ':=',
+                'value'     => Carbon::parse($v->expired_at)->format('d M Y H:i:s'),
+            ])->all();
+
+            RadCheck::upsert($correctionRows, ['username', 'attribute'], ['value']);
+        }
+
+        // ── 3. Tandai expired yang melewati batas waktu ───────────────────
+        $expiredVouchers = Voucher::where('status', 'active')
             ->whereNotNull('expired_at')
             ->where('expired_at', '<', now())
-            ->each(function (Voucher $voucher) use (&$expired) {
-                $this->expire($voucher);
-                $expired++;
-            });
+            ->get(['id', 'code']);
+
+        if ($expiredVouchers->isNotEmpty()) {
+            $expiredCodes = $expiredVouchers->pluck('code')->all();
+
+            Voucher::whereIn('code', $expiredCodes)->update(['status' => 'expired']);
+
+            RadCheck::upsert(
+                collect($expiredCodes)->map(fn ($code) => [
+                    'username'  => $code,
+                    'attribute' => 'Auth-Type',
+                    'op'        => ':=',
+                    'value'     => 'Reject',
+                ])->all(),
+                ['username', 'attribute'],
+                ['value']
+            );
+
+            RadCheck::upsert(
+                collect($expiredCodes)->map(fn ($code) => [
+                    'username'  => $code,
+                    'attribute' => 'Cleartext-Password',
+                    'op'        => ':=',
+                    'value'     => Str::random(32),
+                ])->all(),
+                ['username', 'attribute'],
+                ['value']
+            );
+
+            $expired = count($expiredCodes);
+        }
 
         return compact('activated', 'expired');
     }

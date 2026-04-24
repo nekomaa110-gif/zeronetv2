@@ -17,18 +17,18 @@ class ActivityLogController extends Controller
 
         $logs = ActivityLog::with('user')
             ->when($search, function ($q) use ($search) {
-                $q->where(function ($q2) use ($search) {
-                    $q2->where('action', 'like', "%{$search}%")
-                       ->orWhere('description', 'like', "%{$search}%")
-                       ->orWhereHas('user', fn ($u) =>
-                           $u->where('name', 'like', "%{$search}%")
-                             ->orWhere('username', 'like', "%{$search}%")
-                       );
-                });
+                $q->leftJoin('users', 'users.id', '=', 'activity_logs.user_id')
+                  ->select('activity_logs.*')
+                  ->where(function ($q2) use ($search) {
+                      $q2->where('activity_logs.action', 'like', "%{$search}%")
+                         ->orWhere('activity_logs.description', 'like', "%{$search}%")
+                         ->orWhere('users.name', 'like', "%{$search}%")
+                         ->orWhere('users.username', 'like', "%{$search}%");
+                  });
             })
-            ->when($dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo,   fn ($q) => $q->whereDate('created_at', '<=', $dateTo))
-            ->orderByDesc('created_at')
+            ->when($dateFrom, fn ($q) => $q->whereDate('activity_logs.created_at', '>=', $dateFrom))
+            ->when($dateTo,   fn ($q) => $q->whereDate('activity_logs.created_at', '<=', $dateTo))
+            ->orderByDesc('activity_logs.created_at')
             ->paginate(25)
             ->withQueryString();
 

@@ -70,8 +70,8 @@
                                     <p class="text-sm font-medium text-gray-800 dark:text-white truncate" x-text="stats.identity"></p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2.5">
-                                    <p class="text-xs text-gray-400 mb-0.5">Uptime</p>
-                                    <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="stats.uptime"></p>
+                                    <p class="text-xs text-gray-400 mb-0.5">Waktu Aktif</p>
+                                    <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="fmtUptime(stats.uptime)"></p>
                                 </div>
                             </div>
 
@@ -150,7 +150,16 @@ function routerCard(statsUrl, detailUrl) {
             } finally {
                 this.loading = false;
             }
-        }
+        },
+        fmtUptime(str) {
+            if (!str) return '-';
+            const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
+            const parts = [];
+            for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) {
+                if (label[unit]) parts.push(num + label[unit]);
+            }
+            return parts.join(' ') || '-';
+        },
     };
 }
 </script>

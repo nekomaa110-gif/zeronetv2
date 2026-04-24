@@ -115,7 +115,7 @@
             {{-- Uptime --}}
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                 <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Uptime</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-white mb-1 leading-tight" x-text="stats.uptime"></p>
+                <p class="text-2xl font-bold text-gray-800 dark:text-white mb-1 leading-tight" x-text="fmtUptime(stats.uptime)"></p>
                 <p class="text-xs text-gray-500 dark:text-gray-400 font-medium" x-text="stats.identity"></p>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5" x-text="stats.board + ' · ROS ' + stats.version"></p>
             </div>
@@ -137,20 +137,28 @@
             <div>
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-white">User Hotspot Aktif</h3>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                    <span x-show="!loading" x-text="users.length + ' user online'"></span>
+                    <span x-show="!loading" x-text="filtered.length + ' user online'"></span>
                     <span x-show="loading" class="animate-pulse">Memuat...</span>
                 </p>
             </div>
 
             <div class="flex items-center gap-2">
-                {{-- Countdown badge --}}
+                {{-- Search --}}
+                <label class="flex items-center gap-1.5 pl-2.5 pr-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 w-44 focus-within:ring-1 focus-within:ring-brand-500 focus-within:border-brand-500 transition-shadow overflow-hidden">
+                    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input type="text" x-model="search" placeholder="Cari user, IP, MAC…"
+                        class="flex-1 min-w-0 py-1.5 pr-2 text-xs bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 border-0 outline-none ring-0 focus:outline-none focus:ring-0">
+                </label>
+                {{-- Countdown --}}
                 <span x-show="!loading"
-                      class="text-xs text-gray-400 dark:text-gray-500 tabular-nums hidden sm:inline">
+                      class="text-xs text-gray-400 dark:text-gray-500 tabular-nums hidden md:inline whitespace-nowrap">
                     Refresh dalam <span class="font-medium text-gray-600 dark:text-gray-300" x-text="countdown + 's'"></span>
                 </span>
                 {{-- Refresh button --}}
                 <button @click="load()" :disabled="loading"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm disabled:opacity-50">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm disabled:opacity-50 whitespace-nowrap">
                     <svg class="w-3.5 h-3.5" :class="loading ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
@@ -185,15 +193,14 @@
             <table class="w-full text-sm text-left">
                 <thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
                     <tr>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">User</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">IP</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap table-cell">MAC</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap hidden lg:table-cell">Host</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">Uptime</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap hidden lg:table-cell">Sisa Waktu</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap table-cell">Rx / Tx</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">User</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">IP</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center table-cell">MAC</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">Waktu Online</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center hidden lg:table-cell">Sisa Waktu</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center table-cell">Rx / Tx</th>
                         @if(auth()->user()->role === 'admin')
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-right">Aksi</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">Aksi</th>
                         @endif
                     </tr>
                 </thead>
@@ -202,7 +209,7 @@
                     {{-- Empty state --}}
                     <template x-if="users.length === 0">
                         <tr>
-                            <td colspan="8" class="px-5 py-14 text-center">
+                            <td colspan="7" class="px-5 py-14 text-center">
                                 <svg class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
@@ -211,46 +218,35 @@
                         </tr>
                     </template>
 
-                    <template x-for="user in users" :key="user['.id']">
+                    <template x-for="user in filtered" :key="user['.id']">
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
 
                             {{-- User --}}
-                            <td class="px-4 py-3 whitespace-nowrap">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center flex-shrink-0">
-                                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400"
-                                              x-text="(user.user || '?')[0].toUpperCase()"></span>
-                                    </div>
-                                    <span class="font-medium text-gray-900 dark:text-white text-sm" x-text="user.user || '-'"></span>
-                                </div>
-                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-center font-medium text-gray-900 dark:text-white text-sm" x-text="user.user || '-'"></td>
 
                             {{-- IP --}}
-                            <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap" x-text="user.address || '-'"></td>
+                            <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap text-center" x-text="user.address || '-'"></td>
 
                             {{-- MAC --}}
-                            <td class="px-4 py-3 font-mono text-xs text-gray-400 dark:text-gray-500 table-cell whitespace-nowrap" x-text="user['mac-address'] || '-'"></td>
-
-                            {{-- Host --}}
-                            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 hidden lg:table-cell whitespace-nowrap" x-text="user['host-name'] || '-'"></td>
+                            <td class="px-4 py-3 font-mono text-xs text-gray-400 dark:text-gray-500 table-cell whitespace-nowrap text-center" x-text="user['mac-address'] || '-'"></td>
 
                             {{-- Uptime --}}
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td class="px-4 py-3 whitespace-nowrap text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                                      x-text="user.uptime || '-'"></span>
+                                      x-text="fmtUptime(user.uptime)"></span>
                             </td>
 
                             {{-- Sisa waktu --}}
-                            <td class="px-4 py-3 text-xs hidden lg:table-cell whitespace-nowrap">
+                            <td class="px-4 py-3 text-xs hidden lg:table-cell whitespace-nowrap text-center">
                                 <span x-show="user['session-time-left'] && user['session-time-left'] !== '0s'"
                                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
-                                      x-text="user['session-time-left']"></span>
+                                      x-text="fmtUptime(user['session-time-left'])"></span>
                                 <span x-show="!user['session-time-left'] || user['session-time-left'] === '0s'"
                                       class="text-gray-300 dark:text-gray-600">∞</span>
                             </td>
 
                             {{-- Rx / Tx --}}
-                            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 table-cell whitespace-nowrap">
+                            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 table-cell whitespace-nowrap text-center">
                                 <span class="text-green-600 dark:text-green-400" x-text="fmtBytes(parseInt(user['bytes-in'] ?? 0))"></span>
                                 <span class="text-gray-300 dark:text-gray-600 mx-1">/</span>
                                 <span class="text-blue-600 dark:text-blue-400" x-text="fmtBytes(parseInt(user['bytes-out'] ?? 0))"></span>
@@ -258,7 +254,7 @@
 
                             {{-- Aksi --}}
                             @if(auth()->user()->role === 'admin')
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <td class="px-4 py-3 text-center whitespace-nowrap">
                                 <button @click="disconnect(user['.id'], user.user)"
                                     :disabled="disconnecting === user['.id']"
                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40
@@ -323,6 +319,15 @@ function routerStats(statsUrl) {
             if (n >= 1024)       return (n / 1024).toFixed(1) + ' KB';
             return n + ' B';
         },
+        fmtUptime(str) {
+            if (!str) return '-';
+            const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
+            const parts = [];
+            for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) {
+                if (label[unit]) parts.push(num + label[unit]);
+            }
+            return parts.join(' ') || '-';
+        },
     };
 }
 
@@ -332,12 +337,23 @@ function hotspotUsers(usersUrl, disconnectUrl) {
         disconnectUrl,
         loading: true,
         users: [],
+        search: '',
         fetchError: '',
         disconnecting: null,
         countdown: 30,
         lastUpdated: '—',
         _timer: null,
         csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+
+        get filtered() {
+            const q = this.search.trim().toLowerCase();
+            if (!q) return this.users;
+            return this.users.filter(u =>
+                (u.user        || '').toLowerCase().includes(q) ||
+                (u.address     || '').toLowerCase().includes(q) ||
+                (u['mac-address'] || '').toLowerCase().includes(q)
+            );
+        },
 
         init() {
             this.load();
@@ -393,6 +409,16 @@ function hotspotUsers(usersUrl, disconnectUrl) {
             if (n >= 1048576)    return (n / 1048576).toFixed(1) + ' MB';
             if (n >= 1024)       return (n / 1024).toFixed(1) + ' KB';
             return n + ' B';
+        },
+
+        fmtUptime(str) {
+            if (!str) return '-';
+            const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
+            const parts = [];
+            for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) {
+                if (label[unit]) parts.push(num + label[unit]);
+            }
+            return parts.join(' ') || '-';
         },
     };
 }
