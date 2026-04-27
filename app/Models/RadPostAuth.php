@@ -41,7 +41,7 @@ class RadPostAuth extends Model
         if (!$date) {
             return $query;
         }
-        return $query->whereDate('authdate', '>=', $date);
+        return $query->where('authdate', '>=', $date . ' 00:00:00');
     }
 
     public function scopeByDateTo(Builder $query, ?string $date): Builder
@@ -49,6 +49,6 @@ class RadPostAuth extends Model
         if (!$date) {
             return $query;
         }
-        return $query->whereDate('authdate', '<=', $date);
+        return $query->where('authdate', '<=', $date . ' 23:59:59');
     }
 }

@@ -26,7 +26,7 @@ class HotspotLogController extends Controller
             ->byDateFrom($dateFrom)
             ->byDateTo($dateTo)
             ->orderByDesc('authdate')
-            ->paginate(30)
+            ->simplePaginate(30)
             ->withQueryString();
 
         $rejectReasons = $this->resolveRejectReasons($logs);
@@ -44,7 +44,7 @@ class HotspotLogController extends Controller
         }
 
         $newLogs = RadPostAuth::where('id', '>', $afterId)
-            ->orderByDesc('authdate')
+            ->orderByDesc('id')
             ->limit(20)
             ->get();
 
