@@ -18,11 +18,11 @@ class RadiusUserService
      * Daftar user hotspot dengan search + pagination manual.
      * Sumber data: radcheck (username unik dengan attribute Cleartext-Password).
      */
-    public function paginate(string $search = '', int $perPage = 15, string $group = ''): LengthAwarePaginator
+    public function paginate(string $search = '', int $perPage = 15, string $group = '', string $status = ''): LengthAwarePaginator
     {
         $query = RadCheck::query()
             ->select('radcheck.username')
-            ->where('attribute', 'Cleartext-Password');
+            ->where('radcheck.attribute', 'Cleartext-Password');
 
         if ($group) {
             $query->join('radusergroup', 'radcheck.username', '=', 'radusergroup.username')
@@ -31,6 +31,39 @@ class RadiusUserService
 
         if ($search) {
             $query->where('radcheck.username', 'like', "%{$search}%");
+        }
+
+        // Expression untuk expiry efektif: prefer vouchers.expired_at, fallback radcheck Expiration
+        $effectiveExpiryExpr = "
+            COALESCE(
+                (SELECT v.expired_at FROM vouchers v WHERE v.code = radcheck.username COLLATE utf8mb4_unicode_ci LIMIT 1),
+                (SELECT COALESCE(
+                    STR_TO_DATE(rc_exp.value, '%d %b %Y %H:%i:%s'),
+                    STR_TO_DATE(rc_exp.value, '%d %b %Y')
+                 )
+                 FROM radcheck rc_exp
+                 WHERE rc_exp.username = radcheck.username AND rc_exp.attribute = 'Expiration'
+                 LIMIT 1)
+            )
+        ";
+
+        $hasReject = function ($q) {
+            $q->from('radcheck as rc_rej')
+              ->whereColumn('rc_rej.username', 'radcheck.username')
+              ->where('rc_rej.attribute', 'Auth-Type')
+              ->where('rc_rej.value', 'Reject');
+        };
+
+        if ($status === 'nonaktif') {
+            $query->whereExists($hasReject);
+        } elseif ($status === 'aktif') {
+            $query->whereNotExists($hasReject)
+                  ->where(function ($q) use ($effectiveExpiryExpr) {
+                      $q->whereRaw("$effectiveExpiryExpr >= NOW()")
+                        ->orWhereRaw("$effectiveExpiryExpr IS NULL");
+                  });
+        } elseif ($status === 'expired') {
+            $query->whereRaw("$effectiveExpiryExpr < NOW()");
         }
 
         $query->distinct();

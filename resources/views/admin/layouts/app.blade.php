@@ -238,6 +238,250 @@
             };
         }
     </script>
+    {{-- Live search:
+         - <input data-live-search>   → debounced auto-submit (default 400ms; override: data-live-search="600")
+         - <form data-live-target="#id"> → AJAX swap target HTML alih-alih full reload
+         - <select data-live-submit>   → trigger live-submit (AJAX bila form punya data-live-target) --}}
+    <script>
+        (function () {
+            const FOCUS_KEY = '__live_search_focus__';
+            const SPINNER_SVG = '<svg class="w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+
+            // Restore focus + caret setelah full reload (non-AJAX path)
+            const last = sessionStorage.getItem(FOCUS_KEY);
+            if (last) {
+                sessionStorage.removeItem(FOCUS_KEY);
+                const el = document.querySelector('[data-live-search][name="' + CSS.escape(last) + '"]');
+                if (el) {
+                    el.focus();
+                    const len = el.value.length;
+                    try { el.setSelectionRange(len, len); } catch (_) {}
+                }
+            }
+
+            // Spinner: pasang di setiap input live-search (di dalam wrapper .relative-nya)
+            function ensureSpinner(input) {
+                const wrap = input.parentElement;
+                if (!wrap) return null;
+                let sp = wrap.querySelector('[data-live-spinner]');
+                if (!sp) {
+                    sp = document.createElement('span');
+                    sp.setAttribute('data-live-spinner', '');
+                    sp.className = 'absolute inset-y-0 right-0 hidden items-center pr-3 pointer-events-none';
+                    sp.innerHTML = SPINNER_SVG;
+                    wrap.appendChild(sp);
+                }
+                return sp;
+            }
+            function showSpinner(input) {
+                const sp = ensureSpinner(input);
+                if (sp) { sp.classList.remove('hidden'); sp.classList.add('flex'); }
+                // Sembunyikan tombol clear-X / reset-X saat loading agar tidak menumpuk
+                input.parentElement?.querySelectorAll('[data-live-clear], [data-live-reset]')
+                    .forEach(b => b.classList.add('hidden'));
+            }
+            function hideSpinner(input) {
+                if (!input) return;
+                const sp = input.parentElement?.querySelector('[data-live-spinner]');
+                if (sp) { sp.classList.add('hidden'); sp.classList.remove('flex'); }
+                // Tampilkan kembali clear-X / reset-X sesuai state form
+                syncClearBtn(input);
+                if (input.form) syncResetBtn(input.form);
+            }
+
+            // Build URL dari form state (skip empty values agar URL bersih)
+            function formUrl(form) {
+                const data = new FormData(form);
+                const params = new URLSearchParams();
+                for (const [k, v] of data.entries()) {
+                    if (v !== '' && v !== null && k !== '_token' && k !== '_method') params.append(k, v);
+                }
+                const base = (form.action || window.location.href).split('?')[0];
+                const qs = params.toString();
+                return qs ? base + '?' + qs : base;
+            }
+
+            let currentCtrl = null;
+
+            async function ajaxSwap(url, targetEl, sourceInput) {
+                if (currentCtrl) currentCtrl.abort();
+                currentCtrl = new AbortController();
+
+                if (sourceInput) showSpinner(sourceInput);
+                targetEl.style.opacity = '0.55';
+                targetEl.style.pointerEvents = 'none';
+
+                try {
+                    const res = await fetch(url, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                        signal: currentCtrl.signal,
+                        credentials: 'same-origin',
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const html = await res.text();
+                    targetEl.innerHTML = html;
+                    history.pushState({ liveSearch: true }, '', url);
+                    targetEl.dispatchEvent(new CustomEvent('live-search:loaded', { bubbles: true }));
+                } catch (e) {
+                    if (e.name !== 'AbortError') console.error('[live-search]', e);
+                } finally {
+                    targetEl.style.opacity = '';
+                    targetEl.style.pointerEvents = '';
+                    if (sourceInput) hideSpinner(sourceInput);
+                }
+            }
+
+            function triggerSubmit(form, sourceInput) {
+                const targetSel = form.getAttribute('data-live-target');
+                const targetEl  = targetSel ? document.querySelector(targetSel) : null;
+
+                if (targetEl) {
+                    ajaxSwap(formUrl(form), targetEl, sourceInput);
+                } else {
+                    // Fallback: full reload + simpan focus
+                    if (sourceInput) showSpinner(sourceInput);
+                    if (sourceInput?.name) sessionStorage.setItem(FOCUS_KEY, sourceInput.name);
+                    form.requestSubmit ? form.requestSubmit() : form.submit();
+                }
+            }
+
+            // Toggle visibility tombol clear (data-live-clear) sesuai isi input terdekat
+            function syncClearBtn(input) {
+                const btn = input.parentElement?.querySelector('[data-live-clear]');
+                if (btn) btn.classList.toggle('hidden', !input.value);
+            }
+
+            // Toggle visibility tombol reset-all (data-live-reset) berdasarkan ada/tidaknya filter aktif
+            function syncResetBtn(form) {
+                const btn = form.querySelector('[data-live-reset]');
+                if (!btn) return;
+                let hasFilter = false;
+                form.querySelectorAll('input[name], select[name]').forEach(function (el) {
+                    if (el.type === 'hidden' || el.name === '_token' || el.name === '_method') return;
+                    if (el.value) hasFilter = true;
+                });
+                btn.classList.toggle('hidden', !hasFilter);
+            }
+            // Sync untuk semua form yang punya tombol reset, saat init dan setelah AJAX load
+            function syncAllResetBtns() {
+                document.querySelectorAll('form').forEach(syncResetBtn);
+            }
+
+            // Bind input live-search
+            document.querySelectorAll('[data-live-search]').forEach(function (input) {
+                ensureSpinner(input);
+                syncClearBtn(input);
+                const delay = parseInt(input.dataset.liveSearch, 10) || 400;
+                let timer = null;
+                let lastVal = input.value;
+
+                input.addEventListener('input', function () {
+                    syncClearBtn(input);
+                    if (input.form) syncResetBtn(input.form);
+                    if (input.value === lastVal) return;
+                    lastVal = input.value;
+                    clearTimeout(timer);
+                    if (input.form) showSpinner(input); // visual feedback langsung
+                    timer = setTimeout(function () {
+                        if (!input.form) return;
+                        triggerSubmit(input.form, input);
+                    }, delay);
+                });
+
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        clearTimeout(timer);
+                        if (input.form) {
+                            e.preventDefault();
+                            triggerSubmit(input.form, input);
+                        }
+                    }
+                });
+            });
+
+            // Bind tombol clear (X) — kosongkan input + langsung submit
+            document.querySelectorAll('[data-live-clear]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const wrap = btn.parentElement;
+                    const input = wrap?.querySelector('[data-live-search]');
+                    if (!input) return;
+                    input.value = '';
+                    syncClearBtn(input);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (input.form) triggerSubmit(input.form, input);
+                    input.focus();
+                });
+            });
+
+            // Bind tombol reset (X) — kosongkan SEMUA filter di form lalu submit
+            document.querySelectorAll('[data-live-reset]').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    const form = btn.closest('form');
+                    if (!form) return;
+                    e.preventDefault();
+                    form.querySelectorAll('input[name], select[name]').forEach(function (el) {
+                        if (el.type === 'hidden' || el.name === '_token' || el.name === '_method') return;
+                        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                        else el.value = '';
+                    });
+                    const search = form.querySelector('[data-live-search]');
+                    if (search) syncClearBtn(search);
+                    triggerSubmit(form, search);
+                });
+            });
+
+            // Bind elemen live-submit (select / input date dll) di form ber-data-live-target
+            document.querySelectorAll('[data-live-submit]').forEach(function (el) {
+                el.addEventListener('change', function () {
+                    if (el.form) {
+                        syncResetBtn(el.form);
+                        triggerSubmit(el.form, el.form.querySelector('[data-live-search]'));
+                    }
+                });
+            });
+
+            // Init reset-button visibility
+            syncAllResetBtns();
+
+            // Intercept native form submit untuk form yang punya data-live-target
+            // (misal: tombol clear-X, tombol "Filter", atau Enter di field non-search)
+            document.querySelectorAll('form[data-live-target]').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    triggerSubmit(form, form.querySelector('[data-live-search]'));
+                });
+            });
+
+            // Intercept klik link pagination/anchor di dalam target AJAX
+            document.addEventListener('click', function (e) {
+                const link = e.target.closest('a[href]');
+                if (!link) return;
+                const targetEl = link.closest('[data-live-results]');
+                if (!targetEl) return;
+                if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey) return;
+                // Cari form yang punya target ke container ini
+                const form = document.querySelector('form[data-live-target="#' + CSS.escape(targetEl.id) + '"]');
+                if (!form) return;
+                e.preventDefault();
+                ajaxSwap(link.href, targetEl, form.querySelector('[data-live-search]'));
+            });
+
+            // Back/forward → reload target sesuai URL saat ini
+            window.addEventListener('popstate', function () {
+                document.querySelectorAll('form[data-live-target]').forEach(function (form) {
+                    const targetEl = document.querySelector(form.getAttribute('data-live-target'));
+                    if (!targetEl) return;
+                    // Sync nilai form dari URL params
+                    const params = new URL(window.location.href).searchParams;
+                    form.querySelectorAll('input[name], select[name]').forEach(function (el) {
+                        if (el.type === 'hidden') return;
+                        el.value = params.get(el.name) || '';
+                    });
+                    ajaxSwap(window.location.href, targetEl, form.querySelector('[data-live-search]'));
+                });
+            });
+        })();
+    </script>
     @stack('scripts')
     @stack('overlays')
 </body>

@@ -19,10 +19,16 @@ class RadiusUserController extends Controller
     {
         $search = $request->string('search')->trim()->toString();
         $group  = $request->string('group')->trim()->toString();
-        $users  = $this->service->paginate($search, 15, $group);
+        $status = $request->string('status')->trim()->toString();
+        $users  = $this->service->paginate($search, 15, $group, $status);
+
+        if ($request->ajax()) {
+            return view('admin.radius-users._results', compact('users', 'search', 'group', 'status'));
+        }
+
         $groups = $this->service->availableGroups();
 
-        return view('admin.radius-users.index', compact('users', 'search', 'group', 'groups'));
+        return view('admin.radius-users.index', compact('users', 'search', 'group', 'status', 'groups'));
     }
 
     public function create(): View
