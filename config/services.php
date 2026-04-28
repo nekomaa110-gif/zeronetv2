@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'url'             => env('WA_GATEWAY_URL', 'http://127.0.0.1:3001'),
+        'key'             => env('WA_GATEWAY_KEY'),
+        'reminder_hours'  => (int) env('WA_REMINDER_HOURS_BEFORE', 24),
+    ],
+
 ];

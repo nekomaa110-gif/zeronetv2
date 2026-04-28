@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\RadiusUserController;
 use App\Http\Controllers\Admin\RouterController;
 use App\Http\Controllers\Admin\VoucherController;
+use App\Http\Controllers\Admin\WhatsAppController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -86,6 +87,15 @@ Route::prefix('admin')
             Route::post('/routers/{router}/disconnect', [RouterController::class, 'disconnect'])->name('routers.disconnect');
             Route::post('/routers/{router}/reboot', [RouterController::class, 'reboot'])->name('routers.reboot');
             Route::get('/routers/{router}/backup', [RouterController::class, 'backup'])->name('routers.backup');
+        });
+
+        // ── WhatsApp Gateway (admin only) ─────────────────────────────────
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/whatsapp', [WhatsAppController::class, 'index'])->name('whatsapp.index');
+            Route::post('/whatsapp/send', [WhatsAppController::class, 'send'])->name('whatsapp.send');
+            Route::post('/whatsapp/contacts', [WhatsAppController::class, 'storeContact'])->name('whatsapp.contacts.store');
+            Route::patch('/whatsapp/contacts/{contact}', [WhatsAppController::class, 'updateContact'])->name('whatsapp.contacts.update');
+            Route::delete('/whatsapp/contacts/{contact}', [WhatsAppController::class, 'destroyContact'])->name('whatsapp.contacts.destroy');
         });
 
         // ── Profil Admin (semua role, akses profil sendiri) ───────────────

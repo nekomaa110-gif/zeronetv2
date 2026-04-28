@@ -63,6 +63,7 @@
                 <x-admin.nav-item route="admin.packages.index" icon="package">Paket / Profile</x-admin.nav-item>
                 <x-admin.nav-item route="admin.vouchers.index" icon="voucher">Voucher</x-admin.nav-item>
                 <x-admin.nav-item route="admin.routers.index" icon="router">Manajemen Router</x-admin.nav-item>
+                <x-admin.nav-item route="admin.whatsapp.index" icon="chat">WhatsApp Gateway</x-admin.nav-item>
                 <div class="my-3 border-t border-gray-700"></div>
                 <x-admin.nav-item route="admin.hotspot-logs.index" icon="hotspot-log">Log Hotspot</x-admin.nav-item>
                 <x-admin.nav-item route="admin.activity-logs.index" icon="log">Log Aktivitas</x-admin.nav-item>
@@ -462,6 +463,15 @@
                 // Cari form yang punya target ke container ini
                 const form = document.querySelector('form[data-live-target="#' + CSS.escape(targetEl.id) + '"]');
                 if (!form) return;
+                // Hanya intercept link yang masih di path yang sama (pagination/sort),
+                // bukan link navigasi ke halaman lain seperti Edit/Detail.
+                let linkUrl, formUrlObj;
+                try {
+                    linkUrl = new URL(link.href, window.location.href);
+                    formUrlObj = new URL(form.action || window.location.href, window.location.href);
+                } catch (_) { return; }
+                if (linkUrl.origin !== formUrlObj.origin) return;
+                if (linkUrl.pathname !== formUrlObj.pathname) return;
                 e.preventDefault();
                 ajaxSwap(link.href, targetEl, form.querySelector('[data-live-search]'));
             });
