@@ -74,7 +74,7 @@
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                     </svg>
-                    Kirim via Queue
+                    Kirim
                 </button>
             </form>
         </div>
@@ -85,8 +85,8 @@
             <form method="post" action="{{ route('admin.whatsapp.contacts.store') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username <span class="text-gray-400">(sama dengan radcheck.username)</span></label>
-                    <input name="username" required placeholder="contoh: budi" class="{{ $inputCls }}">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
+                    <input name="username" required placeholder="contoh: admin" class="{{ $inputCls }}">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nomor WhatsApp</label>
@@ -117,7 +117,7 @@
         <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">Daftar Kontak</h3>
             <form method="get" class="flex gap-2">
-                <input name="q" value="{{ $q }}" placeholder="cari username/phone/nama"
+                <input name="q" value="{{ $q }}" placeholder="username,phone,nama"
                        class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                 <button class="{{ $btnNeutral }} text-xs px-3 py-1.5">Cari</button>
             </form>
@@ -138,7 +138,7 @@
                         <th class="text-left px-4 py-3 font-medium">Nama</th>
                         <th class="text-left px-4 py-3 font-medium">Phone</th>
                         <th class="text-left px-4 py-3 font-medium">Notes</th>
-                        <th class="text-left px-4 py-3 font-medium">Reminder Terakhir</th>
+                        <th class="text-left px-4 py-3 font-medium">Dikirim</th>
                         <th class="text-left px-4 py-3 font-medium">Aksi</th>
                     </tr>
                 </thead>
