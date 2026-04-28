@@ -45,13 +45,16 @@ class SendExpiryReminders extends Command
 
         $count = 0;
         foreach ($rows as $r) {
-            $expiry = $this->parseExpiry($r->expiry_raw);
-            $name   = $r->name ?: $r->username;
-            $msg    = "Halo {$name},\n"
-                   . "Paket internet Anda (user: {$r->username}) akan habis pada "
-                   . ($expiry ? $expiry->format('d M Y H:i') : $r->expiry_raw) . ".\n"
-                   . "Silakan perpanjang sebelum jatuh tempo agar koneksi tidak terputus.\n\n"
-                   . "Terima kasih.";
+            $expiry  = $this->parseExpiry($r->expiry_raw);
+            $expiryStr = $expiry
+                ? $expiry->format('d M Y') . ' pukul ' . $expiry->format('H:i')
+                : $r->expiry_raw;
+
+            $msg = "Yth. Bapak/Ibu,\n\n"
+                 . "Voucher atas nama \"{$r->username}\" akan berakhir pada {$expiryStr}.\n\n"
+                 . "Silakan melakukan perpanjangan agar layanan tetap aktif.\n\n"
+                 . "Terima kasih.\n"
+                 . "ZeroNet";
 
             if ($this->option('dry')) {
                 $this->line("[DRY] {$r->phone} ({$r->username}) — habis {$r->expiry_raw}");
