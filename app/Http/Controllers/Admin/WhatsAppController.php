@@ -33,7 +33,7 @@ class WhatsAppController extends Controller
             'message' => ['required', 'string', 'max:1500'],
         ]);
         $number = WhatsAppService::normalizePhone($data['number']);
-        SendWhatsAppMessage::dispatch($number, $data['message']);
+        SendWhatsAppMessage::dispatch($number, $data['message'], null, auth()->id());
         return back()->with('ok', 'Pesan masuk antrean.');
     }
 

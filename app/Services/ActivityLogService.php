@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ActivityLogService
@@ -14,20 +13,19 @@ class ActivityLogService
         string $subjectType = null,
         string $subjectId = null,
         array  $properties = [],
-        string $ipAddress = null
+        string $ipAddress = null,
+        ?int   $userId = null,
     ): void {
-        if (! Auth::check()) {
-            return;
-        }
+        $userId ??= Auth::id();
 
         ActivityLog::create([
-            'user_id'      => Auth::id(),
+            'user_id'      => $userId,
             'action'       => $action,
             'subject_type' => $subjectType,
             'subject_id'   => $subjectId,
             'description'  => $description,
             'properties'   => $properties ?: null,
-            'ip_address'   => $ipAddress ?? request()->ip(),
+            'ip_address'   => $ipAddress ?? (function_exists('request') && request() ? request()->ip() : null),
         ]);
     }
 }

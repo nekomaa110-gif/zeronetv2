@@ -30,8 +30,13 @@
                         'disable_voucher'  => ['label' => 'Nonaktif Voucher','color' => 'yellow'],
                         'enable_voucher'   => ['label' => 'Aktifkan Voucher','color' => 'blue'],
                         'delete_voucher'   => ['label' => 'Hapus Voucher',  'color' => 'red'],
+                        'login'            => ['label' => 'Login',          'color' => 'green'],
+                        'logout'           => ['label' => 'Logout',         'color' => 'gray'],
+                        'login_failed'     => ['label' => 'Login Gagal',    'color' => 'red'],
+                        'wa_send'          => ['label' => 'Kirim WA',       'color' => 'teal'],
                     ];
                     $action = $actionMap[$log->action] ?? ['label' => $log->action, 'color' => 'gray'];
+                    $isSystem = is_null($log->user_id);
                 @endphp
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
 
@@ -45,16 +50,23 @@
                     </td>
 
                     <td class="px-5 py-3.5">
-                        <div class="font-medium text-gray-900 dark:text-white text-sm">
-                            {{ $log->user?->name ?? '—' }}
-                        </div>
-                        <div class="text-xs text-gray-400 dark:text-gray-500">
-                            {{ $log->user?->username ?? '' }}
-                        </div>
+                        @if($isSystem)
+                            <div class="font-medium text-gray-500 dark:text-gray-400 text-sm italic">Sistem</div>
+                            <div class="text-xs text-gray-400 dark:text-gray-500">scheduler</div>
+                        @else
+                            <div class="font-medium text-gray-900 dark:text-white text-sm">
+                                {{ $log->user?->name ?? '—' }}
+                            </div>
+                            <div class="text-xs text-gray-400 dark:text-gray-500">
+                                {{ $log->user?->username ?? '' }}
+                            </div>
+                        @endif
                     </td>
 
                     <td class="px-5 py-3.5 text-center">
-                        @if($log->user?->role === 'admin')
+                        @if($isSystem)
+                            <x-admin.badge color="gray">Sistem</x-admin.badge>
+                        @elseif($log->user?->role === 'admin')
                             <x-admin.badge color="purple">Admin</x-admin.badge>
                         @elseif($log->user?->role === 'operator')
                             <x-admin.badge color="blue">Operator</x-admin.badge>
