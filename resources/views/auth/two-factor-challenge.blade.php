@@ -79,7 +79,7 @@
                     <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]*"
                            maxlength="6" autocomplete="one-time-code" autofocus
                            x-bind:disabled="mode !== 'totp'"
-                           placeholder="123456"
+                           placeholder="XXX XXX"
                            class="w-full px-4 py-3 text-center text-lg tracking-[0.4em] font-mono rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400
                                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
                                   {{ $errors->has('code') ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-gray-700' }}">

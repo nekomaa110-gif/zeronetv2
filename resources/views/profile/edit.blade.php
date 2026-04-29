@@ -283,7 +283,7 @@
                               class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                             @csrf
                             <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Regenerate Recovery Codes</h4>
-                            <p class="text-xs text-gray-400 mb-3">Generate ulang recovery codes (yang lama akan tidak berlaku).</p>
+                            <p class="text-xs text-gray-400 mb-3">Code lama akan tidak berlaku.</p>
                             <input type="password" name="current_password" required
                                    placeholder="Password saat ini"
                                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent mb-2">
@@ -303,7 +303,7 @@
                             @csrf
                             @method('DELETE')
                             <h4 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Nonaktifkan 2FA</h4>
-                            <p class="text-xs text-gray-400 mb-3">Hapus 2FA — login hanya akan butuh password.</p>
+                            <p class="text-xs text-gray-400 mb-3">Hapus 2FA — login hanya menggunakan username dan password.</p>
                             <input type="password" name="current_password" required
                                    placeholder="Password saat ini"
                                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent mb-2">
