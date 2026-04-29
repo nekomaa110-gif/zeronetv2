@@ -17,12 +17,12 @@ class PackageController extends Controller
     public function index(): View
     {
         $packages = $this->service->all();
-        return view('admin.packages.index', compact('packages'));
+        return view('packages.index', compact('packages'));
     }
 
     public function create(): View
     {
-        return view('admin.packages.form', [
+        return view('packages.form', [
             'package'   => null,
             'isUpdate'  => false,
             'presets'   => PackageService::ATTRIBUTE_PRESETS,
@@ -38,13 +38,13 @@ class PackageController extends Controller
         ActivityLogService::log('create', "membuat paket: {$package->groupname}", 'package', $package->groupname);
 
         return redirect()
-            ->route('admin.packages.index')
+            ->route('packages.index')
             ->with('success', "Paket \"{$package->groupname}\" berhasil dibuat.");
     }
 
     public function edit(Package $package): View
     {
-        return view('admin.packages.form', [
+        return view('packages.form', [
             'package'   => $this->service->find($package),
             'isUpdate'  => true,
             'presets'   => PackageService::ATTRIBUTE_PRESETS,
@@ -60,7 +60,7 @@ class PackageController extends Controller
         ActivityLogService::log('update', "mengupdate paket: {$package->groupname}", 'package', $package->groupname);
 
         return redirect()
-            ->route('admin.packages.index')
+            ->route('packages.index')
             ->with('success', "Paket \"{$package->groupname}\" berhasil diperbarui.");
     }
 
@@ -82,7 +82,7 @@ class PackageController extends Controller
         ActivityLogService::log('delete', "menghapus paket: {$groupname}", 'package', $groupname);
 
         return redirect()
-            ->route('admin.packages.index')
+            ->route('packages.index')
             ->with('success', "Paket \"{$groupname}\" berhasil dihapus.");
     }
 
@@ -107,6 +107,6 @@ class PackageController extends Controller
             $groupname,
         );
 
-        return redirect()->route('admin.packages.edit', $package);
+        return redirect()->route('packages.edit', $package);
     }
 }

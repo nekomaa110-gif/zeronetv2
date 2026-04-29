@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Voucher')
 @section('page-title', 'Voucher')
@@ -14,7 +14,7 @@
                 </svg>
                 <span id="btn-print-label">Print Terpilih</span>
             </button>
-            <a href="{{ route('admin.vouchers.create') }}"
+            <a href="{{ route('vouchers.create') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -28,7 +28,7 @@
 
         {{-- Filter bar --}}
         <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-            <form method="GET" action="{{ route('admin.vouchers.index') }}">
+            <form method="GET" action="{{ route('vouchers.index') }}">
                 <div class="flex flex-wrap items-center gap-3">
 
                     <div class="relative w-48">
@@ -68,7 +68,7 @@
                     </button>
 
                     @if($search || $status || $type)
-                        <a href="{{ route('admin.vouchers.index') }}"
+                        <a href="{{ route('vouchers.index') }}"
                            class="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline underline-offset-2">
                             Reset
                         </a>
@@ -178,7 +178,7 @@
                                 <div class="flex items-center justify-end gap-1">
 
                                     {{-- Print single --}}
-                                    <a href="{{ route('admin.vouchers.print', ['ids' => $v->id]) }}"
+                                    <a href="{{ route('vouchers.print', ['ids' => $v->id]) }}"
                                        target="_blank" title="Print"
                                        class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -188,7 +188,7 @@
 
                                     {{-- Enable (admin only, hanya jika disabled) --}}
                                     @if($v->status === 'disabled' && auth()->user()->role === 'admin')
-                                        <form method="POST" action="{{ route('admin.vouchers.enable', $v) }}">
+                                        <form method="POST" action="{{ route('vouchers.enable', $v) }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" title="Aktifkan kembali"
                                                     class="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
@@ -201,7 +201,7 @@
 
                                     {{-- Disable (admin + operator, hanya jika ready/active) --}}
                                     @if(in_array($v->status, ['ready', 'active']))
-                                        <form method="POST" action="{{ route('admin.vouchers.disable', $v) }}">
+                                        <form method="POST" action="{{ route('vouchers.disable', $v) }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" title="Nonaktifkan"
                                                     class="p-1.5 rounded-lg text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
@@ -214,7 +214,7 @@
 
                                     {{-- Delete (admin only) --}}
                                     @if(auth()->user()->role === 'admin')
-                                        <form method="POST" action="{{ route('admin.vouchers.destroy', $v) }}">
+                                        <form method="POST" action="{{ route('vouchers.destroy', $v) }}">
                                             @csrf @method('DELETE')
                                             <button type="submit" title="Hapus"
                                                     class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
@@ -243,9 +243,9 @@
                                         @endif
                                     </p>
                                     @if($search || $status || $type)
-                                        <a href="{{ route('admin.vouchers.index') }}" class="text-sm text-brand-600 hover:underline">Reset filter →</a>
+                                        <a href="{{ route('vouchers.index') }}" class="text-sm text-brand-600 hover:underline">Reset filter →</a>
                                     @else
-                                        <a href="{{ route('admin.vouchers.create') }}" class="text-sm text-brand-600 hover:underline">Generate voucher pertama →</a>
+                                        <a href="{{ route('vouchers.create') }}" class="text-sm text-brand-600 hover:underline">Generate voucher pertama →</a>
                                     @endif
                                 </div>
                             </td>
@@ -340,7 +340,7 @@
     });
 
     window.printSelected = function () {
-        var printUrl = '{{ route('admin.vouchers.print') }}';
+        var printUrl = '{{ route('vouchers.print') }}';
         if (allPagesSelected) {
             // Kirim filter params ke controller, bukan IDs
             var params = 'print_all=1' + (filterParams ? '&' + filterParams : '');

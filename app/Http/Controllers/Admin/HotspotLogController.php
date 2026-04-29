@@ -32,7 +32,7 @@ class HotspotLogController extends Controller
         $rejectReasons = $this->resolveRejectReasons($logs);
         $userIps       = $this->resolveUserIps($logs);
 
-        return view('admin.hotspot-logs.index', compact('logs', 'search', 'status', 'dateFrom', 'dateTo', 'rejectReasons', 'userIps'));
+        return view('hotspot-logs.index', compact('logs', 'search', 'status', 'dateFrom', 'dateTo', 'rejectReasons', 'userIps'));
     }
 
     public function poll(Request $request): JsonResponse
@@ -56,7 +56,7 @@ class HotspotLogController extends Controller
         $userIps       = $this->resolveUserIps($newLogs);
 
         $html = $newLogs->map(fn($log) =>
-            view('admin.hotspot-logs._row', [
+            view('hotspot-logs._row', [
                 'log'           => $log,
                 'rejectReasons' => $rejectReasons,
                 'userIps'       => $userIps,

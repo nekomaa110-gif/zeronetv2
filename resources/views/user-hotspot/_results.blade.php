@@ -58,7 +58,7 @@
 
                             {{-- Toggle aktif/nonaktif --}}
                             <form method="POST"
-                                action="{{ route('admin.radius-users.toggle', $user['username']) }}">
+                                action="{{ route('user-hotspot.toggle', $user['username']) }}">
                                 @csrf
                                 @method('PATCH')
                                 <button type="submit" title="{{ $user['active'] ? 'Nonaktifkan' : 'Aktifkan' }}"
@@ -83,7 +83,7 @@
                             </form>
 
                             {{-- Edit --}}
-                            <a href="{{ route('admin.radius-users.edit', $user['username']) }}" title="Edit"
+                            <a href="{{ route('user-hotspot.edit', $user['username']) }}" title="Edit"
                                 class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                     stroke-width="2">
@@ -94,7 +94,7 @@
 
                             {{-- Hapus --}}
                             <form method="POST"
-                                action="{{ route('admin.radius-users.destroy', $user['username']) }}">
+                                action="{{ route('user-hotspot.destroy', $user['username']) }}">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" title="Hapus"
@@ -119,7 +119,7 @@
                             @if ($search) yang cocok dengan "<strong class="text-gray-600 dark:text-gray-300">{{ $search }}</strong>"@endif.
                         @else
                             Belum ada user hotspot.
-                            <a href="{{ route('admin.radius-users.create') }}"
+                            <a href="{{ route('user-hotspot.create') }}"
                                 class="text-brand-600 hover:underline ml-1">Tambah sekarang →</a>
                         @endif
                     </td>

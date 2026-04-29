@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', $routerName)
 @section('page-title', $routerName)
@@ -12,7 +12,7 @@
             <p class="text-sm text-gray-400 font-mono mt-0.5">{{ $routerHost }}</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-            <a href="{{ route('admin.routers.index') }}"
+            <a href="{{ route('routers.index') }}"
                 class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -20,7 +20,7 @@
                 Kembali
             </a>
             @if(auth()->user()->role === 'admin')
-            <form method="POST" action="{{ route('admin.routers.reboot', $routerId) }}"
+            <form method="POST" action="{{ route('routers.reboot', $routerId) }}"
                   onsubmit="return confirm('Yakin reboot {{ $routerName }}? Semua koneksi aktif akan terputus sementara.')">
                 @csrf
                 <button type="submit"
@@ -31,7 +31,7 @@
                     Reboot
                 </button>
             </form>
-            <a href="{{ route('admin.routers.backup', $routerId) }}"
+            <a href="{{ route('routers.backup', $routerId) }}"
                 class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium transition-colors shadow-sm">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -43,7 +43,7 @@
     </div>
 
     {{-- ── Router Stats ─────────────────────────────────────────────────── --}}
-    <div x-data="routerStats('{{ route('admin.routers.stats', $routerId) }}')"
+    <div x-data="routerStats('{{ route('routers.stats', $routerId) }}')"
          x-init="load()"
          x-cloak
          class="mb-6">
@@ -126,8 +126,8 @@
     {{-- ── Active Hotspot Users ─────────────────────────────────────────── --}}
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
          x-data="hotspotUsers(
-             '{{ route('admin.routers.hotspot-users', $routerId) }}',
-             '{{ route('admin.routers.disconnect',    $routerId) }}'
+             '{{ route('routers.hotspot-users', $routerId) }}',
+             '{{ route('routers.disconnect',    $routerId) }}'
          )"
          x-init="init()"
          x-cloak>

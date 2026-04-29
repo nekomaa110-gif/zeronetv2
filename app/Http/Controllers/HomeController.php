@@ -8,6 +8,6 @@ class HomeController extends Controller
 {
     public function __invoke(): RedirectResponse
     {
-        return redirect()->route('admin.dashboard');
+        return redirect()->route('dashboard');
     }
 }

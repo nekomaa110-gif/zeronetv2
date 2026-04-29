@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Tambah User Hotspot')
 @section('page-title', 'Tambah User Hotspot')
@@ -7,7 +7,7 @@
 
     <x-admin.page-header title="Tambah User Hotspot">
         <x-slot:actions>
-            <a href="{{ route('admin.radius-users.index') }}"
+            <a href="{{ route('user-hotspot.index') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                 ← Kembali
             </a>
@@ -16,7 +16,7 @@
 
     <div class="max-w-2xl">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <form method="POST" action="{{ route('admin.radius-users.store') }}">
+            <form method="POST" action="{{ route('user-hotspot.store') }}">
                 @csrf
 
                 {{-- Username --}}
@@ -81,7 +81,7 @@
                     </select>
                     @if ($groups->isEmpty())
                         <p class="mt-1.5 text-xs text-yellow-600 dark:text-yellow-400">
-                            Belum ada paket. <a href="{{ route('admin.packages.index') }}" class="underline">Buat paket
+                            Belum ada paket. <a href="{{ route('packages.index') }}" class="underline">Buat paket
                                 dahulu →</a>
                         </p>
                     @endif
@@ -109,7 +109,7 @@
                         class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                         Simpan User
                     </button>
-                    <a href="{{ route('admin.radius-users.index') }}"
+                    <a href="{{ route('user-hotspot.index') }}"
                         class="px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                         Batal
                     </a>

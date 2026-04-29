@@ -22,7 +22,7 @@ class DashboardController extends Controller
             ->map(fn ($cfg, $id) => ['id' => $id, ...$cfg])
             ->values();
 
-        return view('admin.dashboard', compact('stats', 'routers'));
+        return view('dashboard', compact('stats', 'routers'));
     }
 
     public function stats(): JsonResponse

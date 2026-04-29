@@ -22,7 +22,7 @@ class EnsureRole
 
         // GET: redirect to dashboard. Write methods: redirect back.
         return $request->isMethod('GET')
-            ? redirect()->route('admin.dashboard')->with('forbidden', $message)
+            ? redirect()->route('dashboard')->with('forbidden', $message)
             : back()->with('forbidden', $message);
     }
 }

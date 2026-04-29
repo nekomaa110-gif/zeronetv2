@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Profil Saya')
 @section('page-title', 'Profil Saya')
@@ -34,7 +34,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('admin.profile.update-info') }}" class="px-6 py-5 space-y-5">
+                <form method="POST" action="{{ route('profile.update-info') }}" class="px-6 py-5 space-y-5">
                     @csrf
                     @method('PATCH')
 
@@ -146,7 +146,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('admin.profile.update-password') }}" class="px-6 py-5 space-y-5">
+                <form method="POST" action="{{ route('profile.update-password') }}" class="px-6 py-5 space-y-5">
                     @csrf
                     @method('PATCH')
 

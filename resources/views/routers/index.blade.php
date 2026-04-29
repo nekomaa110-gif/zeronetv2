@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Manajemen Router')
 @section('page-title', 'Manajemen Router')
@@ -10,7 +10,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         @foreach ($routers as $router)
             <div
-                x-data="routerCard('{{ route('admin.routers.stats', $router['id']) }}', '{{ route('admin.routers.show', $router['id']) }}')"
+                x-data="routerCard('{{ route('routers.stats', $router['id']) }}', '{{ route('routers.show', $router['id']) }}')"
                 x-init="load()"
                 class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
 

@@ -19,14 +19,14 @@ class RouterController extends Controller
         $routers = collect($this->svc->routers())
             ->map(fn ($cfg, $id) => ['id' => $id, ...$cfg]);
 
-        return view('admin.routers.index', compact('routers'));
+        return view('routers.index', compact('routers'));
     }
 
     public function show(string $router)
     {
         $cfg = $this->svc->routerConfig($router);
 
-        return view('admin.routers.show', [
+        return view('routers.show', [
             'routerId'   => $router,
             'routerName' => $cfg['name'],
             'routerHost' => $cfg['host'],

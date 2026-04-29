@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Generate Voucher')
 @section('page-title', 'Generate Voucher')
@@ -9,7 +9,7 @@
         title="Generate Voucher"
         description="Buat voucher baru dan print dengan otomatis.">
         <x-slot:actions>
-            <a href="{{ route('admin.vouchers.index') }}"
+            <a href="{{ route('vouchers.index') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -27,7 +27,7 @@
                 <p class="text-xs text-gray-400 mt-0.5">Kode 8-karakter dibuat otomatis,dan langsung disinkronkan ke Database ZeroNet.</p>
             </div>
 
-            <form method="POST" action="{{ route('admin.vouchers.store') }}" class="px-6 py-5 space-y-6">
+            <form method="POST" action="{{ route('vouchers.store') }}" class="px-6 py-5 space-y-6">
                 @csrf
 
                 {{-- Tipe Voucher --}}
@@ -78,7 +78,7 @@
                     @if($packages->isEmpty())
                         <p class="mt-1.5 text-xs text-yellow-600 dark:text-yellow-400">
                             Belum ada paket aktif.
-                            <a href="{{ route('admin.packages.create') }}" class="underline">Buat paket dahulu →</a>
+                            <a href="{{ route('packages.create') }}" class="underline">Buat paket dahulu →</a>
                         </p>
                     @endif
                 </div>
@@ -141,7 +141,7 @@
                             class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                         Generate Voucher
                     </button>
-                    <a href="{{ route('admin.vouchers.index') }}"
+                    <a href="{{ route('vouchers.index') }}"
                        class="px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                         Batal
                     </a>

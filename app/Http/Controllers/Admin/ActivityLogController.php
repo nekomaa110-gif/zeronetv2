@@ -33,9 +33,9 @@ class ActivityLogController extends Controller
             ->withQueryString();
 
         if ($request->ajax()) {
-            return view('admin.activity-logs._results', compact('logs', 'search', 'dateFrom', 'dateTo'));
+            return view('activity-logs._results', compact('logs', 'search', 'dateFrom', 'dateTo'));
         }
 
-        return view('admin.activity-logs.index', compact('logs', 'search', 'dateFrom', 'dateTo'));
+        return view('activity-logs.index', compact('logs', 'search', 'dateFrom', 'dateTo'));
     }
 }

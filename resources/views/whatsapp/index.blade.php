@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'WhatsApp Gateway')
 @section('page-title', 'WhatsApp Gateway')
@@ -60,7 +60,7 @@
         {{-- Manual send --}}
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Kirim Manual</h3>
-            <form method="post" action="{{ route('admin.whatsapp.send') }}" class="space-y-4">
+            <form method="post" action="{{ route('whatsapp.send') }}" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nomor tujuan</label>
@@ -82,7 +82,7 @@
         {{-- Tambah kontak --}}
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Tambah Kontak Pelanggan</h3>
-            <form method="post" action="{{ route('admin.whatsapp.contacts.store') }}" class="space-y-4">
+            <form method="post" action="{{ route('whatsapp.contacts.store') }}" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
@@ -125,8 +125,8 @@
 
         {{-- Forms (HTML5 form= attribute trick) --}}
         @foreach($contacts as $c)
-            <form id="upd-{{ $c->id }}" method="post" action="{{ route('admin.whatsapp.contacts.update', $c) }}">@csrf @method('PATCH')</form>
-            <form id="del-{{ $c->id }}" method="post" action="{{ route('admin.whatsapp.contacts.destroy', $c) }}"
+            <form id="upd-{{ $c->id }}" method="post" action="{{ route('whatsapp.contacts.update', $c) }}">@csrf @method('PATCH')</form>
+            <form id="del-{{ $c->id }}" method="post" action="{{ route('whatsapp.contacts.destroy', $c) }}"
                   onsubmit="return confirm('Hapus kontak {{ $c->username }}?');">@csrf @method('DELETE')</form>
         @endforeach
 

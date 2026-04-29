@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Edit User: ' . $user['username'])
 @section('page-title', 'Edit User Hotspot')
@@ -7,7 +7,7 @@
 
     <x-admin.page-header title="Edit User: {{ $user['username'] }}">
         <x-slot:actions>
-            <a href="{{ route('admin.radius-users.index') }}"
+            <a href="{{ route('user-hotspot.index') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -25,7 +25,7 @@
                 <p class="text-xs text-gray-400 mt-0.5">Ubah paket, expire, atau password untuk <span class="font-mono font-semibold text-gray-500 dark:text-gray-400">{{ $user['username'] }}</span>.</p>
             </div>
 
-            <form method="POST" action="{{ route('admin.radius-users.update', $user['username']) }}"
+            <form method="POST" action="{{ route('user-hotspot.update', $user['username']) }}"
                   x-data="{
                       showCurrent: false,
                       changePass: false,
@@ -185,7 +185,7 @@
                             class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                         Simpan Perubahan
                     </button>
-                    <a href="{{ route('admin.radius-users.index') }}"
+                    <a href="{{ route('user-hotspot.index') }}"
                        class="px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                         Batal
                     </a>

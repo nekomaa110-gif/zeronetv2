@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Log Aktivitas')
 @section('page-title', 'Log Aktivitas')
@@ -13,7 +13,7 @@
 
         {{-- Filter bar --}}
         <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-            <form method="GET" action="{{ route('admin.activity-logs.index') }}"
+            <form method="GET" action="{{ route('activity-logs.index') }}"
                   data-live-target="#activity-logs-results">
                 <div class="flex flex-wrap items-center gap-3">
 
@@ -56,7 +56,7 @@
 
         {{-- Container hasil (di-swap via AJAX) --}}
         <div id="activity-logs-results" data-live-results class="transition-opacity duration-150">
-            @include('admin.activity-logs._results')
+            @include('activity-logs._results')
         </div>
     </x-admin.table>
 

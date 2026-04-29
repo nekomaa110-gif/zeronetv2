@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Dashboard')
 @section('page-title', 'Dashboard')
@@ -18,7 +18,7 @@
             init() { setInterval(() => this.poll(), 30000); },
             async poll() {
                 try {
-                    const r = await axios.get('{{ route('admin.dashboard.stats') }}');
+                    const r = await axios.get('{{ route('dashboard.stats') }}');
                     this.stats = r.data;
                 } catch(e) {}
             }
@@ -91,7 +91,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
         @foreach ($routers as $router)
             <div
-                x-data="trafficChart('{{ $router['name'] }}', '{{ route('admin.routers.traffic', $router['id']) }}')"
+                x-data="trafficChart('{{ $router['name'] }}', '{{ route('routers.traffic', $router['id']) }}')"
                 x-init="init()"
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
 

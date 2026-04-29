@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', $isUpdate ? 'Edit Paket: ' . $package->groupname : 'Tambah Paket')
 @section('page-title', $isUpdate ? 'Edit Paket' : 'Tambah Paket')
@@ -26,7 +26,7 @@
 
     <x-admin.page-header :title="$isUpdate ? 'Edit Paket: ' . $package->groupname : 'Tambah Paket'">
         <x-slot:actions>
-            <a href="{{ route('admin.packages.index') }}"
+            <a href="{{ route('packages.index') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors">
                 ← Kembali
             </a>
@@ -35,8 +35,8 @@
 
     @php
         $action = $isUpdate
-            ? route('admin.packages.update', $package->id)
-            : route('admin.packages.store');
+            ? route('packages.update', $package->id)
+            : route('packages.store');
     @endphp
 
     <form method="POST" action="{{ $action }}" class="max-w-4xl space-y-5">
@@ -222,7 +222,7 @@
                     class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                 {{ $isUpdate ? 'Simpan Perubahan' : 'Buat Paket' }}
             </button>
-            <a href="{{ route('admin.packages.index') }}"
+            <a href="{{ route('packages.index') }}"
                class="px-5 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                 Batal
             </a>

@@ -19,7 +19,7 @@ class WhatsAppController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.whatsapp.index', [
+        return view('whatsapp.index', [
             'status'   => $wa->status(),
             'contacts' => $contacts,
             'q'        => $r->input('q'),

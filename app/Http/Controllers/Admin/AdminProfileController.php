@@ -15,7 +15,7 @@ class AdminProfileController extends Controller
 {
     public function edit(): View
     {
-        return view('admin.profile.edit', ['user' => Auth::user()]);
+        return view('profile.edit', ['user' => Auth::user()]);
     }
 
     public function updateInfo(Request $request): RedirectResponse

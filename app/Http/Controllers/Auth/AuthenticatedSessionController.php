@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
         // Update last login timestamp
         $request->user()->update(['last_login_at' => now()]);
 
-        return redirect()->intended(route('admin.dashboard', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**

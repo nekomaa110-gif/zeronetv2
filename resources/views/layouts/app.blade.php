@@ -58,15 +58,15 @@
 
             {{-- Nav --}}
             <nav class="flex-1 px-3 py-4 space-y-1">
-                <x-admin.nav-item route="admin.dashboard" icon="dashboard">Dashboard</x-admin.nav-item>
-                <x-admin.nav-item route="admin.radius-users.index" icon="users">User Hotspot</x-admin.nav-item>
-                <x-admin.nav-item route="admin.packages.index" icon="package">Paket / Profile</x-admin.nav-item>
-                <x-admin.nav-item route="admin.vouchers.index" icon="voucher">Voucher</x-admin.nav-item>
-                <x-admin.nav-item route="admin.routers.index" icon="router">Manajemen Router</x-admin.nav-item>
-                <x-admin.nav-item route="admin.whatsapp.index" icon="chat">WhatsApp Gateway</x-admin.nav-item>
+                <x-admin.nav-item route="dashboard" icon="dashboard">Dashboard</x-admin.nav-item>
+                <x-admin.nav-item route="user-hotspot.index" icon="users">User Hotspot</x-admin.nav-item>
+                <x-admin.nav-item route="packages.index" icon="package">Paket / Profile</x-admin.nav-item>
+                <x-admin.nav-item route="vouchers.index" icon="voucher">Voucher</x-admin.nav-item>
+                <x-admin.nav-item route="routers.index" icon="router">Manajemen Router</x-admin.nav-item>
+                <x-admin.nav-item route="whatsapp.index" icon="chat">WhatsApp Gateway</x-admin.nav-item>
                 <div class="my-3 border-t border-gray-700"></div>
-                <x-admin.nav-item route="admin.hotspot-logs.index" icon="hotspot-log">Log Hotspot</x-admin.nav-item>
-                <x-admin.nav-item route="admin.activity-logs.index" icon="log">Log Aktivitas</x-admin.nav-item>
+                <x-admin.nav-item route="hotspot-logs.index" icon="hotspot-log">Log Hotspot</x-admin.nav-item>
+                <x-admin.nav-item route="activity-logs.index" icon="log">Log Aktivitas</x-admin.nav-item>
             </nav>
 
             {{-- User info --}}
@@ -152,7 +152,7 @@
 
                         <div x-show="open" x-cloak x-transition
                             class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50">
-                            <a href="{{ route('admin.profile.edit') }}"
+                            <a href="{{ route('profile.edit') }}"
                                 class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

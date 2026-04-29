@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Paket / Profile')
 @section('page-title', 'Paket / Profile')
@@ -7,7 +7,7 @@
 
     <x-admin.page-header title="Paket / Profile" description="Kelola paket dan profil untuk user hotspot ZeroNet.">
         <x-slot:actions>
-            <a href="{{ route('admin.packages.create') }}"
+            <a href="{{ route('packages.create') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -80,7 +80,7 @@
                                 <div class="flex items-center justify-end gap-1">
                                     @if($pkg['is_legacy'])
                                         {{-- Profil panel lama: hanya Edit (import otomatis) --}}
-                                        <a href="{{ route('admin.packages.legacy-edit', $pkg['groupname']) }}"
+                                        <a href="{{ route('packages.legacy-edit', $pkg['groupname']) }}"
                                            title="Edit &amp; import ke panel baru"
                                            class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -90,7 +90,7 @@
                                         </a>
                                     @else
                                         {{-- Toggle --}}
-                                        <form method="POST" action="{{ route('admin.packages.toggle', $pkg['id']) }}">
+                                        <form method="POST" action="{{ route('packages.toggle', $pkg['id']) }}">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" title="{{ $pkg['is_active'] ? 'Nonaktifkan' : 'Aktifkan' }}"
@@ -110,7 +110,7 @@
                                         </form>
 
                                         {{-- Edit --}}
-                                        <a href="{{ route('admin.packages.edit', $pkg['id']) }}" title="Edit"
+                                        <a href="{{ route('packages.edit', $pkg['id']) }}" title="Edit"
                                             class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                                 stroke-width="2">
@@ -120,7 +120,7 @@
                                         </a>
 
                                         {{-- Delete --}}
-                                        <form method="POST" action="{{ route('admin.packages.destroy', $pkg['id']) }}">
+                                        <form method="POST" action="{{ route('packages.destroy', $pkg['id']) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" title="Hapus"
@@ -146,7 +146,7 @@
                                             d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V11" />
                                     </svg>
                                     <p class="text-sm text-gray-400 dark:text-gray-500">Belum ada paket.</p>
-                                    <a href="{{ route('admin.packages.create') }}"
+                                    <a href="{{ route('packages.create') }}"
                                         class="text-sm text-brand-600 hover:underline">
                                         Buat paket pertama →
                                     </a>

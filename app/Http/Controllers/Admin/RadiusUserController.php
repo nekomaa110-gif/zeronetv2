@@ -23,18 +23,18 @@ class RadiusUserController extends Controller
         $users  = $this->service->paginate($search, 15, $group, $status);
 
         if ($request->ajax()) {
-            return view('admin.radius-users._results', compact('users', 'search', 'group', 'status'));
+            return view('user-hotspot._results', compact('users', 'search', 'group', 'status'));
         }
 
         $groups = $this->service->availableGroups();
 
-        return view('admin.radius-users.index', compact('users', 'search', 'group', 'status', 'groups'));
+        return view('user-hotspot.index', compact('users', 'search', 'group', 'status', 'groups'));
     }
 
     public function create(): View
     {
         $groups = $this->service->availableGroups();
-        return view('admin.radius-users.create', compact('groups'));
+        return view('user-hotspot.create', compact('groups'));
     }
 
     public function store(RadiusUserRequest $request): RedirectResponse
@@ -51,7 +51,7 @@ class RadiusUserController extends Controller
         );
 
         return redirect()
-            ->route('admin.radius-users.index')
+            ->route('user-hotspot.index')
             ->with('success', "User {$data['username']} berhasil dibuat.");
     }
 
@@ -59,7 +59,7 @@ class RadiusUserController extends Controller
     {
         $user   = $this->service->find($username);
         $groups = $this->service->availableGroups();
-        return view('admin.radius-users.edit', compact('user', 'groups'));
+        return view('user-hotspot.edit', compact('user', 'groups'));
     }
 
     public function update(RadiusUserRequest $request, string $username): RedirectResponse
@@ -82,7 +82,7 @@ class RadiusUserController extends Controller
         );
 
         return redirect()
-            ->route('admin.radius-users.index')
+            ->route('user-hotspot.index')
             ->with('success', "User {$username} berhasil diperbarui.");
     }
 

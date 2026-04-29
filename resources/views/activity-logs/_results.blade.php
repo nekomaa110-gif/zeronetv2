@@ -103,7 +103,7 @@
                                 @endif
                             </p>
                             @if($search || $dateFrom || $dateTo)
-                                <a href="{{ route('admin.activity-logs.index') }}"
+                                <a href="{{ route('activity-logs.index') }}"
                                    class="text-sm text-brand-600 hover:underline">Reset filter →</a>
                             @endif
                         </div>

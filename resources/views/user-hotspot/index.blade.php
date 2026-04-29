@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.app')
 
 @section('title', 'User Hotspot')
 @section('page-title', 'User Hotspot')
@@ -7,7 +7,7 @@
 
     <x-admin.page-header title="User Hotspot" description="Kelola user Hotspot ZeroNet.">
         <x-slot:actions>
-            <a href="{{ route('admin.radius-users.create') }}"
+            <a href="{{ route('user-hotspot.create') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -21,7 +21,7 @@
 
         {{-- Search + Filter bar --}}
         <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-            <form method="GET" action="{{ route('admin.radius-users.index') }}"
+            <form method="GET" action="{{ route('user-hotspot.index') }}"
                   data-live-target="#radius-users-results"
                   class="flex flex-wrap items-center gap-3">
 
@@ -73,7 +73,7 @@
 
         {{-- Container hasil (di-swap via AJAX saat search/filter/pagination) --}}
         <div id="radius-users-results" data-live-results class="transition-opacity duration-150">
-            @include('admin.radius-users._results')
+            @include('user-hotspot._results')
         </div>
     </x-admin.table>
 

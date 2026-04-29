@@ -30,7 +30,7 @@ class VoucherController extends Controller
             ->paginate(25)
             ->withQueryString();
 
-        return view('admin.vouchers.index', [
+        return view('vouchers.index', [
             'vouchers' => $vouchers,
             'search'   => $search,
             'status'   => $status,
@@ -41,7 +41,7 @@ class VoucherController extends Controller
 
     public function create(): View
     {
-        return view('admin.vouchers.create', [
+        return view('vouchers.create', [
             'packages' => Package::where('is_active', true)->orderBy('groupname')->get(),
             'types'    => VoucherService::TYPES,
         ]);
@@ -65,7 +65,7 @@ class VoucherController extends Controller
             null
         );
 
-        return redirect()->route('admin.vouchers.index')
+        return redirect()->route('vouchers.index')
             ->with('success', "Berhasil membuat {$vouchers->count()} voucher.");
     }
 
@@ -119,6 +119,6 @@ class VoucherController extends Controller
             ->limit(500)
             ->get();
 
-        return view('admin.vouchers.print', compact('vouchers'));
+        return view('vouchers.print', compact('vouchers'));
     }
 }
