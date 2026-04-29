@@ -11,39 +11,40 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        $user = $request->validateCredentials();
+
+        if ($user->hasTwoFactorEnabled()) {
+            $request->session()->put('login.2fa', [
+                'user_id'  => $user->id,
+                'remember' => $request->boolean('remember'),
+                'expires'  => now()->addMinutes(5)->timestamp,
+            ]);
+
+            return redirect()->route('two-factor.challenge');
+        }
+
+        Auth::login($user, $request->boolean('remember'));
 
         $request->session()->regenerate();
         session(['last_activity_time' => time()]);
 
-        // Update last login timestamp
-        $request->user()->update(['last_login_at' => now()]);
+        $user->update(['last_login_at' => now()]);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

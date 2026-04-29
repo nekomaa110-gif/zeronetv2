@@ -243,4 +243,90 @@
 
     </div>
 
+    {{-- ── Two-Factor Authentication ─────────────────────────────────────── --}}
+    <div class="mt-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+
+            <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+                <div class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Two-Factor Authentication (2FA)</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Lindungi akun dengan kode dari aplikasi authenticator.</p>
+                </div>
+                @if ($user->hasTwoFactorEnabled())
+                    <x-admin.badge color="green">Aktif</x-admin.badge>
+                @else
+                    <x-admin.badge color="gray">Nonaktif</x-admin.badge>
+                @endif
+            </div>
+
+            @if(session('success_2fa'))
+                <div class="px-6 pt-4">
+                    <x-admin.alert type="success" :message="session('success_2fa')"/>
+                </div>
+            @endif
+
+            <div class="px-6 py-5">
+                @if ($user->hasTwoFactorEnabled())
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        2FA aktif sejak {{ $user->two_factor_confirmed_at->translatedFormat('d M Y H:i') }}.
+                        Setiap login akan meminta kode 6 digit dari authenticator Anda.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {{-- Regenerate recovery codes --}}
+                        <form method="POST" action="{{ route('two-factor.regenerate-codes') }}"
+                              class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                            @csrf
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-1">Regenerate Recovery Codes</h4>
+                            <p class="text-xs text-gray-400 mb-3">Generate ulang recovery codes (yang lama akan tidak berlaku).</p>
+                            <input type="password" name="current_password" required
+                                   placeholder="Password saat ini"
+                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent mb-2">
+                            @error('current_password')
+                                <p class="mb-2 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                            <button type="submit"
+                                    class="w-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium rounded-lg transition-colors">
+                                Regenerate
+                            </button>
+                        </form>
+
+                        {{-- Disable 2FA --}}
+                        <form method="POST" action="{{ route('two-factor.disable') }}"
+                              onsubmit="return confirm('Yakin nonaktifkan 2FA? Akun jadi kurang aman.');"
+                              class="border border-red-200 dark:border-red-900/50 rounded-lg p-4">
+                            @csrf
+                            @method('DELETE')
+                            <h4 class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Nonaktifkan 2FA</h4>
+                            <p class="text-xs text-gray-400 mb-3">Hapus 2FA — login hanya akan butuh password.</p>
+                            <input type="password" name="current_password" required
+                                   placeholder="Password saat ini"
+                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent mb-2">
+                            <button type="submit"
+                                    class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors">
+                                Nonaktifkan
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Saat ini akun Anda hanya dilindungi password. Aktifkan 2FA agar login juga butuh kode dari aplikasi authenticator.
+                    </p>
+                    <a href="{{ route('two-factor.setup') }}"
+                       class="inline-flex items-center gap-2 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        Aktifkan 2FA
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
+
 @endsection

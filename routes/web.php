@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\HotspotLogController;
 use App\Http\Controllers\Admin\PackageController;
 use App\Http\Controllers\Admin\RadiusUserController;
 use App\Http\Controllers\Admin\RouterController;
+use App\Http\Controllers\Admin\TwoFactorSettingsController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\WhatsAppController;
 use Illuminate\Support\Facades\Route;
@@ -106,6 +107,13 @@ Route::middleware(['auth', 'ensure.admin'])->group(function () {
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile/info', [AdminProfileController::class, 'updateInfo'])->name('profile.update-info');
     Route::patch('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
+
+    // ── 2FA Settings (semua role, akun sendiri) ───────────────────────
+    Route::get('/profile/two-factor', [TwoFactorSettingsController::class, 'setup'])->name('two-factor.setup');
+    Route::post('/profile/two-factor', [TwoFactorSettingsController::class, 'confirm'])->name('two-factor.confirm');
+    Route::get('/profile/two-factor/recovery-codes', [TwoFactorSettingsController::class, 'recoveryCodes'])->name('two-factor.recovery-codes');
+    Route::post('/profile/two-factor/recovery-codes', [TwoFactorSettingsController::class, 'regenerateRecoveryCodes'])->name('two-factor.regenerate-codes');
+    Route::delete('/profile/two-factor', [TwoFactorSettingsController::class, 'disable'])->name('two-factor.disable');
 });
 
 require __DIR__.'/auth.php';
