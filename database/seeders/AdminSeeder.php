@@ -10,26 +10,27 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'nazrinkyushi10@gmail.com'],
-            [
-                'name'      => 'nazrin',
-                'username'  => 'nazrin',
-                'email'     => 'nazrinkyushi10@gmail.com',
-                'password'  => Hash::make('1100'),
-                'role'      => 'admin',
-                'is_active' => true,
-            ]
-        );
+        $this->seedUser('admin', config('seeder.admin', []));
+        $this->seedUser('operator', config('seeder.operator', []));
+    }
+
+    private function seedUser(string $role, array $data): void
+    {
+        foreach (['name', 'username', 'email', 'password'] as $key) {
+            if (empty($data[$key] ?? null)) {
+                $this->command?->warn("AdminSeeder: lewati role={$role} (config seeder.{$role}.{$key} kosong).");
+                return;
+            }
+        }
 
         User::updateOrCreate(
-            ['email' => 'operator@radius.local'],
+            ['email' => $data['email']],
             [
-                'name'      => 'sukmo',
-                'username'  => 'sukmo',
-                'email'     => 'sukmo@radius.local',
-                'password'  => Hash::make('9090'),
-                'role'      => 'operator',
+                'name'      => $data['name'],
+                'username'  => $data['username'],
+                'email'     => $data['email'],
+                'password'  => Hash::make($data['password']),
+                'role'      => $role,
                 'is_active' => true,
             ]
         );
