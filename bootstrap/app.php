@@ -29,6 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
         $schedule->command('vouchers:sync')->everyMinute()->withoutOverlapping();
         $schedule->command('wa:reminders')->hourly()->withoutOverlapping();
+        // Log retention
+        $schedule->command('logs:archive')->monthlyOn(1, '02:00')->withoutOverlapping();
+        $schedule->command('logs:cleanup')->dailyAt('04:00')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
