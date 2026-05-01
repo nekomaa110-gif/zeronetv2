@@ -27,8 +27,9 @@ class RadiusUserController extends Controller
         }
 
         $groups = $this->service->availableGroups();
+        $stats  = $this->service->stats();
 
-        return view('user-hotspot.index', compact('users', 'search', 'group', 'status', 'groups'));
+        return view('user-hotspot.index', compact('users', 'search', 'group', 'status', 'groups', 'stats'));
     }
 
     public function create(): View

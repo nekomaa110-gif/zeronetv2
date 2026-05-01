@@ -260,6 +260,46 @@ class RadiusUserService
     }
 
     /**
+     * Statistik agregat untuk header User Hotspot.
+     * Mengembalikan: total, active, expired, disabled.
+     */
+    public function stats(): array
+    {
+        $total = RadCheck::where('attribute', 'Cleartext-Password')->distinct()->count('username');
+
+        $disabled = RadCheck::where('attribute', 'Auth-Type')->where('value', 'Reject')->distinct()->count('username');
+
+        $effectiveExpiryExpr = "
+            COALESCE(
+                (SELECT v.expired_at FROM vouchers v WHERE v.code = radcheck.username COLLATE utf8mb4_unicode_ci LIMIT 1),
+                (SELECT COALESCE(
+                    STR_TO_DATE(rc_exp.value, '%d %b %Y %H:%i:%s'),
+                    STR_TO_DATE(rc_exp.value, '%d %b %Y')
+                 )
+                 FROM radcheck rc_exp
+                 WHERE rc_exp.username = radcheck.username AND rc_exp.attribute = 'Expiration'
+                 LIMIT 1)
+            )
+        ";
+
+        $expired = RadCheck::query()
+            ->where('radcheck.attribute', 'Cleartext-Password')
+            ->whereRaw("$effectiveExpiryExpr < NOW()")
+            ->whereNotExists(function ($q) {
+                $q->from('radcheck as rc_rej')
+                  ->whereColumn('rc_rej.username', 'radcheck.username')
+                  ->where('rc_rej.attribute', 'Auth-Type')
+                  ->where('rc_rej.value', 'Reject');
+            })
+            ->distinct()
+            ->count('radcheck.username');
+
+        $active = max(0, $total - $disabled - $expired);
+
+        return compact('total', 'active', 'expired', 'disabled');
+    }
+
+    /**
      * Ambil daftar group dari UNION radgroupcheck + radgroupreply,
      * sama seperti logika panel lama — agar profil lawas tetap muncul.
      */
