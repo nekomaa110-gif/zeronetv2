@@ -5,422 +5,284 @@
 
 @section('content')
 
-    {{-- ── Page Header ─────────────────────────────────────────────────── --}}
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $routerName }}</h2>
-            <p class="text-sm text-gray-400 font-mono mt-0.5">{{ $routerHost }}</p>
+  <header class="page-head" x-data="routerStats('{{ route('routers.stats', $routerId) }}')" x-init="load()">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;color:var(--text-3);font-size:12px;margin-bottom:6px">
+        <a href="{{ route('routers.index') }}" style="color:var(--text-2)">Manajemen Router</a>
+        <span>/</span>
+        <span>{{ $routerName }}</span>
+      </div>
+      <h2>
+        {{ $routerName }}
+        <template x-if="loading"><span class="badge" style="font-size:12px;vertical-align:middle;margin-left:8px">Mengecek…</span></template>
+        <template x-if="!loading && online"><span class="badge ok" style="font-size:12px;vertical-align:middle;margin-left:8px">Online</span></template>
+        <template x-if="!loading && !online"><span class="badge err" style="font-size:12px;vertical-align:middle;margin-left:8px">Offline</span></template>
+      </h2>
+      <p class="mono">{{ $routerHost }} · ether1 (WAN) <span x-show="!loading && online && stats.identity">· <span x-text="stats.identity"></span></span></p>
+    </div>
+    <div class="head-actions">
+      <a class="btn" href="{{ route('routers.index') }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Kembali
+      </a>
+      @if((auth()->user()->role ?? null) === 'admin')
+        <form method="POST" action="{{ route('routers.reboot', $routerId) }}"
+              onsubmit="return confirm('Yakin reboot {{ $routerName }}? Semua koneksi aktif akan terputus sementara.')"
+              style="display:inline-flex">
+          @csrf
+          <button type="submit" class="btn btn-warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Reboot
+          </button>
+        </form>
+        <a href="{{ route('routers.backup', $routerId) }}" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Backup Config
+        </a>
+      @endif
+    </div>
+  </header>
+
+  {{-- Resource cards --}}
+  <section x-data="routerStats('{{ route('routers.stats', $routerId) }}')" x-init="load()" x-cloak
+           style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:22px">
+
+    <template x-if="loading">
+      <template x-for="i in 4" :key="i">
+        <div class="res-card"><div class="skeleton" style="height:80px"></div></div>
+      </template>
+    </template>
+
+    <template x-if="!loading && !online">
+      <div class="card card-pad" style="grid-column:1/-1;border-color: color-mix(in srgb, var(--err) 30%, transparent); background: color-mix(in srgb, var(--err) 6%, var(--bg-elev));display:flex;align-items:center;gap:10px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--err);flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div style="flex:1">
+          <div style="font-weight:600;color:var(--err)">Router tidak dapat dijangkau</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px" x-text="error"></div>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-            <a href="{{ route('routers.index') }}"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                Kembali
-            </a>
-            @if(auth()->user()->role === 'admin')
-            <form method="POST" action="{{ route('routers.reboot', $routerId) }}"
-                  onsubmit="return confirm('Yakin reboot {{ $routerName }}? Semua koneksi aktif akan terputus sementara.')">
-                @csrf
-                <button type="submit"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-colors shadow-sm">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Reboot
-                </button>
-            </form>
-            <a href="{{ route('routers.backup', $routerId) }}"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium transition-colors shadow-sm">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Backup Config
-            </a>
-            @endif
+        <button @click="load()" class="btn btn-sm">Coba lagi</button>
+      </div>
+    </template>
+
+    <template x-if="!loading && online">
+      <div style="display:contents">
+        <div class="res-card">
+          <div class="rc-l">CPU Load</div>
+          <div class="rc-v mono" :style="stats.cpu_load > 80 ? 'color:var(--err)' : stats.cpu_load > 50 ? 'color:var(--warn)' : 'color:var(--ok)'" x-text="stats.cpu_load + '%'"></div>
+          <div class="progress" :class="stats.cpu_load > 80 ? 'err' : stats.cpu_load > 50 ? 'warn' : 'ok'"><i :style="'width:' + stats.cpu_load + '%'"></i></div>
+          <div class="rc-s" x-text="(stats.cpu_count || '') + (stats.cpu_count ? ' cores · ' : '') + (stats.cpu || '')"></div>
         </div>
+
+        <div class="res-card">
+          <div class="rc-l">RAM</div>
+          <div class="rc-v mono" :style="stats.mem_pct > 85 ? 'color:var(--err)' : stats.mem_pct > 60 ? 'color:var(--warn)' : 'color:var(--info)'" x-text="stats.mem_pct + '%'"></div>
+          <div class="progress" :class="stats.mem_pct > 85 ? 'err' : stats.mem_pct > 60 ? 'warn' : ''"><i :style="'width:' + stats.mem_pct + '%'"></i></div>
+          <div class="rc-s mono" x-text="fmtBytes(stats.used_mem) + ' / ' + fmtBytes(stats.total_mem)"></div>
+        </div>
+
+        <div class="res-card">
+          <div class="rc-l">Storage</div>
+          <div class="rc-v mono" :style="stats.hdd_pct > 85 ? 'color:var(--err)' : stats.hdd_pct > 60 ? 'color:var(--warn)' : 'color:var(--brand-3)'" x-text="stats.hdd_pct + '%'"></div>
+          <div class="progress" :class="stats.hdd_pct > 85 ? 'err' : stats.hdd_pct > 60 ? 'warn' : ''"><i :style="'width:' + stats.hdd_pct + '%'"></i></div>
+          <div class="rc-s mono" x-text="fmtBytes(stats.used_hdd) + ' / ' + fmtBytes(stats.total_hdd)"></div>
+        </div>
+
+        <div class="res-card">
+          <div class="rc-l">Uptime</div>
+          <div class="rc-v" style="font-size:22px" x-text="fmtUptime(stats.uptime)"></div>
+          <div style="height:6px"></div>
+          <div class="rc-s" x-text="(stats.identity || '—') + (stats.version ? ' · ROS ' + stats.version : '')"></div>
+        </div>
+      </div>
+    </template>
+  </section>
+
+  {{-- Active Hotspot Users --}}
+  <div class="card"
+       x-data="hotspotUsers('{{ route('routers.hotspot-users', $routerId) }}', '{{ route('routers.disconnect', $routerId) }}')"
+       x-init="init()" x-cloak>
+
+    <div class="card-head">
+      <div>
+        <h3>User Hotspot Aktif</h3>
+        <p>
+          <span x-show="!loading" x-text="filtered.length + ' user online'"></span>
+          <span x-show="loading">Memuat…</span>
+        </p>
+      </div>
+      <div class="ch-actions">
+        <div class="input-group" style="width:240px">
+          <svg class="ig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" x-model="search" placeholder="Cari user, IP, MAC…" class="input" />
+        </div>
+        <span style="color:var(--text-3);font-size:12px" x-show="!loading && !fetchError">Refresh dalam <b class="mono" x-text="countdown + 's'"></b></span>
+        <button @click="load()" :disabled="loading" class="btn btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               :style="loading ? 'animation: spin 1s linear infinite' : ''"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
     </div>
 
-    {{-- ── Router Stats ─────────────────────────────────────────────────── --}}
-    <div x-data="routerStats('{{ route('routers.stats', $routerId) }}')"
-         x-init="load()"
-         x-cloak
-         class="mb-6">
-
-        {{-- Loading skeleton --}}
-        <div x-show="loading" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            @for ($i = 0; $i < 4; $i++)
-                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 h-28 animate-pulse"></div>
-            @endfor
-        </div>
-
-        {{-- Offline / error --}}
-        <div x-show="!loading && !online"
-             class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-5 py-4 flex items-center gap-3">
-            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div class="flex-1">
-                <p class="text-sm font-medium text-red-700 dark:text-red-400">Router tidak dapat dijangkau</p>
-                <p class="text-xs text-red-500 dark:text-red-500 mt-0.5" x-text="error"></p>
-            </div>
-            <button @click="load()" class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 font-medium underline whitespace-nowrap">Coba lagi</button>
-        </div>
-
-        {{-- ✅ 4-column stat grid --}}
-        <div x-show="!loading && online" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-            {{-- CPU --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">CPU Load</p>
-                <p class="text-3xl font-bold mb-3 tabular-nums"
-                   :class="stats.cpu_load > 80 ? 'text-red-500' : stats.cpu_load > 50 ? 'text-yellow-500' : 'text-green-500'"
-                   x-text="stats.cpu_load + '%'"></p>
-                <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
-                    <div class="h-1.5 rounded-full transition-all duration-500"
-                         :class="stats.cpu_load > 80 ? 'bg-red-500' : stats.cpu_load > 50 ? 'bg-yellow-500' : 'bg-green-500'"
-                         :style="'width:' + stats.cpu_load + '%'"></div>
-                </div>
-            </div>
-
-            {{-- RAM --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">RAM</p>
-                <p class="text-3xl font-bold mb-3 tabular-nums"
-                   :class="stats.mem_pct > 85 ? 'text-red-500' : stats.mem_pct > 60 ? 'text-yellow-500' : 'text-blue-500'"
-                   x-text="stats.mem_pct + '%'"></p>
-                <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
-                    <div class="h-1.5 rounded-full transition-all duration-500"
-                         :class="stats.mem_pct > 85 ? 'bg-red-500' : stats.mem_pct > 60 ? 'bg-yellow-500' : 'bg-blue-500'"
-                         :style="'width:' + stats.mem_pct + '%'"></div>
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2" x-text="fmtBytes(stats.used_mem) + ' / ' + fmtBytes(stats.total_mem)"></p>
-            </div>
-
-            {{-- Storage --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Storage</p>
-                <p class="text-3xl font-bold mb-3 tabular-nums"
-                   :class="stats.hdd_pct > 85 ? 'text-red-500' : stats.hdd_pct > 60 ? 'text-yellow-500' : 'text-purple-500'"
-                   x-text="stats.hdd_pct + '%'"></p>
-                <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
-                    <div class="h-1.5 rounded-full transition-all duration-500"
-                         :class="stats.hdd_pct > 85 ? 'bg-red-500' : stats.hdd_pct > 60 ? 'bg-yellow-500' : 'bg-purple-500'"
-                         :style="'width:' + stats.hdd_pct + '%'"></div>
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2" x-text="fmtBytes(stats.used_hdd) + ' / ' + fmtBytes(stats.total_hdd)"></p>
-            </div>
-
-            {{-- Uptime --}}
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Uptime</p>
-                <p class="text-2xl font-bold text-gray-800 dark:text-white mb-1 leading-tight" x-text="fmtUptime(stats.uptime)"></p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium" x-text="stats.identity"></p>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5" x-text="stats.board + ' · ROS ' + stats.version"></p>
-            </div>
-
-        </div>
+    <div x-show="loading" style="padding: 12px var(--pad-card);">
+      @for ($i = 0; $i < 6; $i++)
+        <div class="skeleton" style="height:14px;margin-bottom:10px"></div>
+      @endfor
     </div>
 
-    {{-- ── Active Hotspot Users ─────────────────────────────────────────── --}}
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-         x-data="hotspotUsers(
-             '{{ route('routers.hotspot-users', $routerId) }}',
-             '{{ route('routers.disconnect',    $routerId) }}'
-         )"
-         x-init="init()"
-         x-cloak>
-
-        {{-- Section header --}}
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-            <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">User Hotspot Aktif</h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                    <span x-show="!loading" x-text="filtered.length + ' user online'"></span>
-                    <span x-show="loading" class="animate-pulse">Memuat...</span>
-                </p>
-            </div>
-
-            <div class="flex items-center gap-2">
-                {{-- Search --}}
-                <label class="flex items-center gap-1.5 pl-2.5 pr-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 w-44 focus-within:ring-1 focus-within:ring-brand-500 focus-within:border-brand-500 transition-shadow overflow-hidden">
-                    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input type="text" x-model="search" placeholder="Cari user, IP, MAC…"
-                        class="flex-1 min-w-0 py-1.5 pr-2 text-xs bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 border-0 outline-none ring-0 focus:outline-none focus:ring-0">
-                </label>
-                {{-- Countdown --}}
-                <span x-show="!loading"
-                      class="text-xs text-gray-400 dark:text-gray-500 tabular-nums hidden md:inline whitespace-nowrap">
-                    Refresh dalam <span class="font-medium text-gray-600 dark:text-gray-300" x-text="countdown + 's'"></span>
-                </span>
-                {{-- Refresh button --}}
-                <button @click="load()" :disabled="loading"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm disabled:opacity-50 whitespace-nowrap">
-                    <svg class="w-3.5 h-3.5" :class="loading ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh
-                </button>
-            </div>
-        </div>
-
-        {{-- Loading skeleton rows --}}
-        <div x-show="loading" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-            @for ($i = 0; $i < 6; $i++)
-            <div class="flex items-center gap-4 px-5 py-3.5">
-                <div class="h-3 w-28 bg-gray-100 dark:bg-gray-700 rounded-full animate-pulse"></div>
-                <div class="h-3 w-24 bg-gray-100 dark:bg-gray-700 rounded-full animate-pulse"></div>
-                <div class="h-3 w-36 bg-gray-100 dark:bg-gray-700 rounded-full animate-pulse hidden md:block"></div>
-                <div class="h-3 w-20 bg-gray-100 dark:bg-gray-700 rounded-full animate-pulse hidden lg:block ml-auto"></div>
-            </div>
-            @endfor
-        </div>
-
-        {{-- Fetch error --}}
-        <div x-show="!loading && fetchError" class="px-5 py-10 text-center">
-            <svg class="w-8 h-8 text-red-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p class="text-sm font-medium text-red-500 dark:text-red-400" x-text="fetchError"></p>
-            <button @click="load()" class="mt-2 text-xs text-brand-600 dark:text-brand-400 underline">Coba lagi</button>
-        </div>
-
-        {{-- ✅ User table --}}
-        <div x-show="!loading && !fetchError" class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                    <tr>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">User</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">IP</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center table-cell">MAC</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">Waktu Online</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center hidden lg:table-cell">Sisa Waktu</th>
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center table-cell">Rx / Tx</th>
-                        @if(auth()->user()->role === 'admin')
-                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap text-center">Aksi</th>
-                        @endif
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-
-                    {{-- Empty state --}}
-                    <template x-if="users.length === 0">
-                        <tr>
-                            <td colspan="7" class="px-5 py-14 text-center">
-                                <svg class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <p class="text-sm text-gray-400 dark:text-gray-500">Tidak ada user hotspot aktif</p>
-                            </td>
-                        </tr>
-                    </template>
-
-                    <template x-for="user in filtered" :key="user['.id']">
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-
-                            {{-- User --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-center font-medium text-gray-900 dark:text-white text-sm" x-text="user.user || '-'"></td>
-
-                            {{-- IP --}}
-                            <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap text-center" x-text="user.address || '-'"></td>
-
-                            {{-- MAC --}}
-                            <td class="px-4 py-3 font-mono text-xs text-gray-400 dark:text-gray-500 table-cell whitespace-nowrap text-center" x-text="user['mac-address'] || '-'"></td>
-
-                            {{-- Uptime --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                                      x-text="fmtUptime(user.uptime)"></span>
-                            </td>
-
-                            {{-- Sisa waktu --}}
-                            <td class="px-4 py-3 text-xs hidden lg:table-cell whitespace-nowrap text-center">
-                                <span x-show="user['session-time-left'] && user['session-time-left'] !== '0s'"
-                                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
-                                      x-text="fmtUptime(user['session-time-left'])"></span>
-                                <span x-show="!user['session-time-left'] || user['session-time-left'] === '0s'"
-                                      class="text-gray-300 dark:text-gray-600">∞</span>
-                            </td>
-
-                            {{-- Rx / Tx --}}
-                            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 table-cell whitespace-nowrap text-center">
-                                <span class="text-green-600 dark:text-green-400" x-text="fmtBytes(parseInt(user['bytes-in'] ?? 0))"></span>
-                                <span class="text-gray-300 dark:text-gray-600 mx-1">/</span>
-                                <span class="text-blue-600 dark:text-blue-400" x-text="fmtBytes(parseInt(user['bytes-out'] ?? 0))"></span>
-                            </td>
-
-                            {{-- Aksi --}}
-                            @if(auth()->user()->role === 'admin')
-                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                <button @click="disconnect(user['.id'], user.user)"
-                                    :disabled="disconnecting === user['.id']"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40
-                                           text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/60
-                                           hover:bg-red-50 dark:hover:bg-red-900/20">
-                                    <svg x-show="disconnecting !== user['.id']" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                    <svg x-show="disconnecting === user['.id']" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    Putus
-                                </button>
-                            </td>
-                            @endif
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Footer: last updated --}}
-        <div x-show="!loading && !fetchError" class="px-5 py-2.5 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/20">
-            <p class="text-xs text-gray-400 dark:text-gray-500">
-                Terakhir diperbarui: <span x-text="lastUpdated"></span>
-                &nbsp;·&nbsp; Auto-refresh setiap 30 detik
-            </p>
-        </div>
-
+    <div x-show="!loading && fetchError" style="padding: 36px var(--pad-card);text-align:center;">
+      <div style="color:var(--err);font-weight:600;font-size:13px" x-text="fetchError"></div>
+      <button @click="load()" class="btn btn-sm" style="margin-top:8px">Coba lagi</button>
     </div>
+
+    <div x-show="!loading && !fetchError" class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>IP</th>
+            <th>MAC</th>
+            <th>Waktu Online</th>
+            <th>Sisa Waktu</th>
+            <th>RX / TX</th>
+            @if((auth()->user()->role ?? null) === 'admin') <th style="text-align:right">Aksi</th> @endif
+          </tr>
+        </thead>
+        <tbody>
+          <template x-if="users.length === 0">
+            <tr>
+              <td colspan="7" style="padding: 56px 0; text-align:center; color:var(--text-2)">
+                <div style="display:inline-flex;flex-direction:column;align-items:center;gap:8px">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  <span>Tidak ada user hotspot aktif</span>
+                </div>
+              </td>
+            </tr>
+          </template>
+
+          <template x-for="user in filtered" :key="user['.id']">
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar xs" x-text="(user.user || '?')[0].toUpperCase()"></div>
+                  <div class="um"><b x-text="user.user || '-'"></b></div>
+                </div>
+              </td>
+              <td class="mono" x-text="user.address || '-'"></td>
+              <td class="mono" style="color:var(--text-2)" x-text="user['mac-address'] || '-'"></td>
+              <td class="mono" x-text="fmtUptime(user.uptime)"></td>
+              <td class="mono" style="color:var(--text-3)">
+                <span x-show="user['session-time-left'] && user['session-time-left'] !== '0s'" x-text="fmtUptime(user['session-time-left'])"></span>
+                <span x-show="!user['session-time-left'] || user['session-time-left'] === '0s'">—</span>
+              </td>
+              <td>
+                <span class="mono" style="color:var(--err)">↓ <span x-text="fmtBytes(parseInt(user['bytes-in'] ?? 0))"></span></span>
+                <span class="mono" style="color:var(--info);margin-left:8px">↑ <span x-text="fmtBytes(parseInt(user['bytes-out'] ?? 0))"></span></span>
+              </td>
+              @if((auth()->user()->role ?? null) === 'admin')
+                <td style="text-align:right">
+                  <button @click="disconnect(user['.id'], user.user)" :disabled="disconnecting === user['.id']"
+                          class="btn btn-sm btn-danger" style="padding:4px 10px;font-size:12px">Putus</button>
+                </td>
+              @endif
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <div x-show="!loading && !fetchError" style="padding:10px var(--pad-card);border-top:1px solid var(--border);background:var(--bg-mute);font-size:11.5px;color:var(--text-3)">
+      Terakhir diperbarui: <span x-text="lastUpdated"></span>
+    </div>
+  </div>
+
+  <style>
+    .res-card { background:var(--card-bg);border:var(--card-border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--card-shadow); }
+    .rc-l { color:var(--text-3);font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px }
+    .rc-v { font-size:30px;font-weight:700;letter-spacing:-.02em;margin-bottom:10px;font-variant-numeric:tabular-nums }
+    .rc-s { color:var(--text-3);font-size:11.5px;margin-top:8px }
+  </style>
 
 @endsection
 
 @push('scripts')
 <script>
 function routerStats(statsUrl) {
-    return {
-        statsUrl,
-        loading: true,
-        online: false,
-        stats: {},
-        error: '',
-        async load() {
-            this.loading = true;
-            try {
-                const res  = await fetch(this.statsUrl);
-                const data = await res.json();
-                this.online = data.online;
-                this.stats  = data.stats ?? {};
-                this.error  = data.error ?? '';
-            } catch (e) {
-                this.online = false;
-                this.error  = e.message;
-            } finally {
-                this.loading = false;
-            }
-        },
-        fmtBytes(n) {
-            n = parseInt(n) || 0;
-            if (n >= 1073741824) return (n / 1073741824).toFixed(1) + ' GB';
-            if (n >= 1048576)    return (n / 1048576).toFixed(1) + ' MB';
-            if (n >= 1024)       return (n / 1024).toFixed(1) + ' KB';
-            return n + ' B';
-        },
-        fmtUptime(str) {
-            if (!str) return '-';
-            const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
-            const parts = [];
-            for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) {
-                if (label[unit]) parts.push(num + label[unit]);
-            }
-            return parts.join(' ') || '-';
-        },
-    };
+  return {
+    statsUrl, loading: true, online: false, stats: {}, error: '',
+    async load() {
+      this.loading = true;
+      try {
+        const res = await fetch(this.statsUrl);
+        const data = await res.json();
+        this.online = data.online;
+        this.stats  = data.stats ?? {};
+        this.error  = data.error ?? '';
+      } catch (e) { this.online = false; this.error = e.message; }
+      finally { this.loading = false; }
+    },
+    fmtBytes(n) { n = parseInt(n) || 0; if (n >= 1073741824) return (n/1073741824).toFixed(1)+' GB'; if (n >= 1048576) return (n/1048576).toFixed(1)+' MB'; if (n >= 1024) return (n/1024).toFixed(1)+' KB'; return n+' B'; },
+    fmtUptime(str) {
+      if (!str) return '-';
+      const label = { w:'mg', d:'hr', h:'j', m:'m' }; const parts = [];
+      for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) if (label[unit]) parts.push(num + label[unit]);
+      return parts.join(' ') || '-';
+    },
+  };
 }
 
 function hotspotUsers(usersUrl, disconnectUrl) {
-    return {
-        usersUrl,
-        disconnectUrl,
-        loading: true,
-        users: [],
-        search: '',
-        fetchError: '',
-        disconnecting: null,
-        countdown: 30,
-        lastUpdated: '—',
-        _timer: null,
-        csrfToken: document.querySelector('meta[name="csrf-token"]').content,
-
-        get filtered() {
-            const q = this.search.trim().toLowerCase();
-            if (!q) return this.users;
-            return this.users.filter(u =>
-                (u.user        || '').toLowerCase().includes(q) ||
-                (u.address     || '').toLowerCase().includes(q) ||
-                (u['mac-address'] || '').toLowerCase().includes(q)
-            );
-        },
-
-        init() {
-            this.load();
-        },
-
-        async load() {
-            this.loading = true;
-            this.fetchError = '';
-            try {
-                const res  = await fetch(this.usersUrl);
-                const data = await res.json();
-                if (data.success) {
-                    this.users = data.users;
-                    this.lastUpdated = new Date().toLocaleTimeString('id-ID');
-                } else {
-                    this.fetchError = data.error ?? 'Gagal memuat data.';
-                }
-            } catch (e) {
-                this.fetchError = e.message;
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        async disconnect(sessionId, username) {
-            if (!confirm(`Putus koneksi user "${username}"?`)) return;
-            this.disconnecting = sessionId;
-            try {
-                const res  = await fetch(this.disconnectUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
-                    body: JSON.stringify({ session_id: sessionId }),
-                });
-                const data = await res.json();
-                if (data.success) {
-                    this.users = this.users.filter(u => u['.id'] !== sessionId);
-                } else {
-                    alert('Gagal: ' + (data.error ?? 'Unknown error'));
-                }
-            } catch (e) {
-                alert('Error: ' + e.message);
-            } finally {
-                this.disconnecting = null;
-            }
-        },
-
-        fmtBytes(n) {
-            n = parseInt(n) || 0;
-            if (n >= 1073741824) return (n / 1073741824).toFixed(1) + ' GB';
-            if (n >= 1048576)    return (n / 1048576).toFixed(1) + ' MB';
-            if (n >= 1024)       return (n / 1024).toFixed(1) + ' KB';
-            return n + ' B';
-        },
-
-        fmtUptime(str) {
-            if (!str) return '-';
-            const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
-            const parts = [];
-            for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) {
-                if (label[unit]) parts.push(num + label[unit]);
-            }
-            return parts.join(' ') || '-';
-        },
-    };
+  return {
+    usersUrl, disconnectUrl,
+    loading: true, users: [], search: '', fetchError: '', disconnecting: null,
+    countdown: 30, lastUpdated: '—',
+    csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+    get filtered() {
+      const q = this.search.trim().toLowerCase();
+      if (!q) return this.users;
+      return this.users.filter(u =>
+        (u.user||'').toLowerCase().includes(q) ||
+        (u.address||'').toLowerCase().includes(q) ||
+        (u['mac-address']||'').toLowerCase().includes(q)
+      );
+    },
+    init() {
+      this.load();
+      setInterval(() => { this.countdown = this.countdown > 0 ? this.countdown - 1 : 30; if (this.countdown === 30) this.load(); }, 1000);
+    },
+    async load() {
+      this.loading = true; this.fetchError = '';
+      try {
+        const res = await fetch(this.usersUrl);
+        const data = await res.json();
+        if (data.success) { this.users = data.users; this.lastUpdated = new Date().toLocaleTimeString('id-ID'); this.countdown = 30; }
+        else this.fetchError = data.error ?? 'Gagal memuat data.';
+      } catch (e) { this.fetchError = e.message; }
+      finally { this.loading = false; }
+    },
+    async disconnect(sessionId, username) {
+      if (!confirm(`Putus koneksi user "${username}"?`)) return;
+      this.disconnecting = sessionId;
+      try {
+        const res = await fetch(this.disconnectUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+        const data = await res.json();
+        if (data.success) this.users = this.users.filter(u => u['.id'] !== sessionId);
+        else alert('Gagal: ' + (data.error ?? 'Unknown error'));
+      } catch (e) { alert('Error: ' + e.message); }
+      finally { this.disconnecting = null; }
+    },
+    fmtBytes(n) { n = parseInt(n) || 0; if (n >= 1073741824) return (n/1073741824).toFixed(1)+' GB'; if (n >= 1048576) return (n/1048576).toFixed(1)+' MB'; if (n >= 1024) return (n/1024).toFixed(1)+' KB'; return n+' B'; },
+    fmtUptime(str) {
+      if (!str) return '-';
+      const label = { w:'mg', d:'hr', h:'j', m:'m' }; const parts = [];
+      for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) if (label[unit]) parts.push(num + label[unit]);
+      return parts.join(' ') || '-';
+    },
+  };
 }
 </script>
 @endpush

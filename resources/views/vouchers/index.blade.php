@@ -5,263 +5,225 @@
 
 @section('content')
 
-    <x-admin.page-header title="Voucher" description="Kelola voucher hotspot ZeroNet.">
-        <x-slot:actions>
-            <button id="btn-print-selected" type="button" onclick="printSelected()"
-                    class="hidden inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                </svg>
-                <span id="btn-print-label">Print Terpilih</span>
-            </button>
-            <a href="{{ route('vouchers.create') }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
-                Generate Voucher
-            </a>
-        </x-slot:actions>
-    </x-admin.page-header>
+  <header class="page-head">
+    <div>
+      <h2>Voucher</h2>
+      <p>Generate, cetak, dan kelola voucher hotspot batch.</p>
+    </div>
+    <div class="head-actions">
+      <button id="btn-print-selected" type="button" onclick="printSelected()" class="btn hidden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span id="btn-print-label">Print Terpilih</span>
+      </button>
+      <a href="{{ route('vouchers.create') }}" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Generate Voucher
+      </a>
+    </div>
+  </header>
 
-    <x-admin.table>
+  @php
+    // Lightweight aggregate stats (4 indexed count() — murah, dipakai hanya untuk tampilan ringkas)
+    $vTotal    = \App\Models\Voucher::count();
+    $vReady    = \App\Models\Voucher::where('status', 'ready')->count();
+    $vUsed     = \App\Models\Voucher::where('status', 'active')->count();
+    $vExpired  = \App\Models\Voucher::where('status', 'expired')->count();
+  @endphp
+  <section class="stat-grid" style="margin-bottom: 22px;">
+    <div class="stat tone-info">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/></svg></div>
+      <div class="stat-label">Total Voucher</div>
+      <div class="stat-value">{{ number_format($vTotal) }}</div>
+    </div>
+    <div class="stat tone-ok">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="stat-label">Terpakai</div>
+      <div class="stat-value">{{ number_format($vUsed) }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>
+      <div class="stat-label">Tersedia</div>
+      <div class="stat-value">{{ number_format($vReady) }}</div>
+      @if($vReady === 0)<div class="stat-foot"><a href="{{ route('vouchers.create') }}" style="color:var(--brand-3);font-weight:600">Generate batch baru →</a></div>@endif
+    </div>
+    <div class="stat tone-warn">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="stat-label">Expired</div>
+      <div class="stat-value">{{ number_format($vExpired) }}</div>
+    </div>
+  </section>
 
-        {{-- Filter bar --}}
-        <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-            <form method="GET" action="{{ route('vouchers.index') }}">
-                <div class="flex flex-wrap items-center gap-3">
+  <div class="card">
 
-                    <div class="relative w-48">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </span>
-                        <input type="text" name="search" value="{{ $search }}"
-                               placeholder="Cari kode / catatan..." data-live-search
-                               class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400
-                                      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
-                    </div>
+    {{-- Filter --}}
+    <div style="padding: 14px var(--pad-card); border-bottom: 1px solid var(--border);">
+      <form method="GET" action="{{ route('vouchers.index') }}"
+            style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
 
-                    <select name="status"
-                            class="py-2 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
-                        <option value="">Semua Status</option>
-                        <option value="ready"    @selected($status === 'ready')>Ready</option>
-                        <option value="active"   @selected($status === 'active')>Digunakan</option>
-                        <option value="expired"  @selected($status === 'expired')>Expired</option>
-                        <option value="disabled" @selected($status === 'disabled')>Nonaktif</option>
-                    </select>
-
-                    <select name="type"
-                            class="py-2 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
-                        <option value="">Semua Tipe</option>
-                        @foreach($types as $key => $cfg)
-                            <option value="{{ $key }}" @selected($type === $key)>{{ $cfg['label'] }}</option>
-                        @endforeach
-                    </select>
-
-                    <button type="submit"
-                            class="px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors">
-                        Filter
-                    </button>
-
-                    @if($search || $status || $type)
-                        <a href="{{ route('vouchers.index') }}"
-                           class="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 underline underline-offset-2">
-                            Reset
-                        </a>
-                    @endif
-                </div>
-            </form>
+        <div class="input-group" style="width:240px;position:relative;">
+          <svg class="ig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" name="search" value="{{ $search }}" placeholder="Cari kode / catatan..." data-live-search class="input" />
         </div>
 
-        {{-- Banner pilih semua lintas halaman (Gmail-style) --}}
-        <div id="select-all-banner" class="hidden px-5 py-2.5 bg-brand-50 dark:bg-brand-900/20 border-b border-brand-100 dark:border-brand-800 text-sm text-brand-700 dark:text-brand-300 flex items-center gap-2">
-            <span id="banner-text"></span>
-            <button id="btn-select-all-pages" type="button"
-                    class="font-semibold underline underline-offset-2 hover:text-brand-900 dark:hover:text-brand-100">
-            </button>
-        </div>
+        <select name="status" class="select" style="width:auto;min-width:160px;">
+          <option value="">Semua Status</option>
+          <option value="ready"    @selected($status === 'ready')>Ready</option>
+          <option value="active"   @selected($status === 'active')>Digunakan</option>
+          <option value="expired"  @selected($status === 'expired')>Expired</option>
+          <option value="disabled" @selected($status === 'disabled')>Nonaktif</option>
+        </select>
 
-        {{-- Tabel --}}
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 dark:bg-gray-700/60 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    <tr>
-                        <th class="px-5 py-3 font-medium w-10">
-                            <input type="checkbox" id="check-all"
-                                   class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500 bg-white dark:bg-gray-800">
-                        </th>
-                        <th class="px-5 py-3 font-medium">Username</th>
-                        <th class="px-5 py-3 font-medium">Password</th>
-                        <th class="px-5 py-3 font-medium">Tipe</th>
-                        <th class="px-5 py-3 font-medium">Paket</th>
-                        <th class="px-5 py-3 font-medium text-center">Status</th>
-                        <th class="px-5 py-3 font-medium">Login Pertama</th>
-                        <th class="px-5 py-3 font-medium">Expired</th>
-                        <th class="px-5 py-3 font-medium text-right">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                    @forelse($vouchers as $v)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+        <select name="type" class="select" style="width:auto;min-width:160px;">
+          <option value="">Semua Tipe</option>
+          @foreach($types as $key => $cfg)
+            <option value="{{ $key }}" @selected($type === $key)>{{ $cfg['label'] }}</option>
+          @endforeach
+        </select>
 
-                            <td class="px-5 py-3.5">
-                                <input type="checkbox" value="{{ $v->id }}"
-                                       class="voucher-checkbox w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500 bg-white dark:bg-gray-800">
-                            </td>
+        <button type="submit" class="btn btn-primary">Filter</button>
 
-                            <td class="px-5 py-3.5">
-                                <span class="font-mono font-bold text-gray-900 dark:text-white tracking-widest">{{ $v->code }}</span>
-                                @if($v->note)
-                                    <p class="text-xs text-gray-400 mt-0.5 truncate max-w-[160px]">{{ $v->note }}</p>
-                                @endif
-                            </td>
-
-                            <td class="px-5 py-3.5">
-                                <span class="font-mono font-bold text-lg tracking-widest text-gray-800 dark:text-gray-200">{{ $v->password ?? '—' }}</span>
-                            </td>
-
-                            <td class="px-5 py-3.5 text-xs whitespace-nowrap">
-                                @php $typeInfo = $types[$v->type] ?? null; @endphp
-                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ $typeInfo['label'] ?? $v->type }}</span>
-                            </td>
-
-                            <td class="px-5 py-3.5">
-                                @if($v->package)
-                                    <x-admin.badge color="purple">{{ $v->package->groupname }}</x-admin.badge>
-                                @else
-                                    <span class="text-gray-300 dark:text-gray-600">—</span>
-                                @endif
-                            </td>
-
-                            <td class="px-5 py-3.5 text-center">
-                                @switch($v->status)
-                                    @case('ready')
-                                        <x-admin.badge color="green" :dot="true">Ready</x-admin.badge>
-                                        @break
-                                    @case('active')
-                                        <x-admin.badge color="yellow" :dot="true">Digunakan</x-admin.badge>
-                                        @break
-                                    @case('expired')
-                                        <x-admin.badge color="red">Expired</x-admin.badge>
-                                        @break
-                                    @case('disabled')
-                                        <x-admin.badge color="gray">Nonaktif</x-admin.badge>
-                                        @break
-                                @endswitch
-                            </td>
-
-                            <td class="px-5 py-3.5 text-xs text-gray-500 dark:text-gray-400">
-                                @if($v->first_login_at)
-                                    <div>{{ $v->first_login_at->format('d M Y') }}</div>
-                                    <div class="font-mono text-gray-400">{{ $v->first_login_at->format('H:i') }}</div>
-                                @else
-                                    <span class="text-gray-300 dark:text-gray-600">—</span>
-                                @endif
-                            </td>
-
-                            <td class="px-5 py-3.5 text-xs">
-                                @if($v->expired_at)
-                                    <div class="{{ $v->status === 'expired' ? 'text-red-500 dark:text-red-400 font-medium' : 'text-gray-500 dark:text-gray-400' }}">
-                                        {{ $v->expired_at->format('d M Y') }}
-                                    </div>
-                                    <div class="font-mono text-gray-400">{{ $v->expired_at->format('H:i') }}</div>
-                                @else
-                                    <span class="text-gray-300 dark:text-gray-600">—</span>
-                                @endif
-                            </td>
-
-                            <td class="px-5 py-3.5">
-                                <div class="flex items-center justify-end gap-1">
-
-                                    {{-- Print single --}}
-                                    <a href="{{ route('vouchers.print', ['ids' => $v->id]) }}"
-                                       target="_blank" title="Print"
-                                       class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                        </svg>
-                                    </a>
-
-                                    {{-- Enable (admin only, hanya jika disabled) --}}
-                                    @if($v->status === 'disabled' && auth()->user()->role === 'admin')
-                                        <form method="POST" action="{{ route('vouchers.enable', $v) }}">
-                                            @csrf @method('PATCH')
-                                            <button type="submit" title="Aktifkan kembali"
-                                                    class="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    {{-- Disable (admin + operator, hanya jika ready/active) --}}
-                                    @if(in_array($v->status, ['ready', 'active']))
-                                        <form method="POST" action="{{ route('vouchers.disable', $v) }}">
-                                            @csrf @method('PATCH')
-                                            <button type="submit" title="Nonaktifkan"
-                                                    class="p-1.5 rounded-lg text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    {{-- Delete (admin only) --}}
-                                    @if(auth()->user()->role === 'admin')
-                                        <form method="POST" action="{{ route('vouchers.destroy', $v) }}">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" title="Hapus"
-                                                    class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="px-5 py-16 text-center">
-                                <div class="flex flex-col items-center gap-2">
-                                    <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
-                                    </svg>
-                                    <p class="text-sm text-gray-400 dark:text-gray-500">
-                                        @if($search || $status || $type)
-                                            Tidak ada voucher yang cocok dengan filter.
-                                        @else
-                                            Belum ada voucher.
-                                        @endif
-                                    </p>
-                                    @if($search || $status || $type)
-                                        <a href="{{ route('vouchers.index') }}" class="text-sm text-brand-600 hover:underline">Reset filter →</a>
-                                    @else
-                                        <a href="{{ route('vouchers.create') }}" class="text-sm text-brand-600 hover:underline">Generate voucher pertama →</a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        @if($vouchers->hasPages())
-            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700">
-                {{ $vouchers->withQueryString()->links() }}
-            </div>
+        @if($search || $status || $type)
+          <a href="{{ route('vouchers.index') }}" class="btn btn-ghost">Reset</a>
         @endif
+      </form>
+    </div>
 
-    </x-admin.table>
+    {{-- Banner pilih semua lintas halaman --}}
+    <div id="select-all-banner" class="hidden"
+         style="padding: 10px var(--pad-card); background: color-mix(in srgb, var(--brand-3) 8%, transparent); border-bottom: 1px solid var(--border); font-size: 13px; color: var(--brand-3); display:flex; align-items:center; gap:8px;">
+      <span id="banner-text"></span>
+      <button id="btn-select-all-pages" type="button" style="background:none;border:0;color:inherit;font-weight:600;text-decoration:underline;cursor:pointer"></button>
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="width:40px"><input type="checkbox" id="check-all"></th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Tipe</th>
+            <th>Paket</th>
+            <th style="text-align:center">Status</th>
+            <th>Login Pertama</th>
+            <th>Expired</th>
+            <th style="text-align:right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($vouchers as $v)
+            <tr>
+              <td>
+                <input type="checkbox" value="{{ $v->id }}" class="voucher-checkbox">
+              </td>
+              <td>
+                <span class="mono" style="font-weight:700;letter-spacing:.06em">{{ $v->code }}</span>
+                @if($v->note)
+                  <div style="font-size:11.5px;color:var(--text-3);margin-top:2px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $v->note }}</div>
+                @endif
+              </td>
+              <td>
+                <span class="mono" style="font-weight:700;font-size:15px;letter-spacing:.06em">{{ $v->password ?? '—' }}</span>
+              </td>
+              <td>
+                @php $typeInfo = $types[$v->type] ?? null; @endphp
+                <span style="font-size:12px;color:var(--text-2);font-weight:500">{{ $typeInfo['label'] ?? $v->type }}</span>
+              </td>
+              <td>
+                @if($v->package)
+                  <span class="badge brand">{{ $v->package->groupname }}</span>
+                @else
+                  <span style="color:var(--text-3)">—</span>
+                @endif
+              </td>
+              <td style="text-align:center">
+                @switch($v->status)
+                  @case('ready')    <span class="badge ok">Ready</span> @break
+                  @case('active')   <span class="badge warn">Digunakan</span> @break
+                  @case('expired')  <span class="badge err">Expired</span> @break
+                  @case('disabled') <span class="badge">Nonaktif</span> @break
+                @endswitch
+              </td>
+              <td style="font-size:12px;color:var(--text-2)">
+                @if($v->first_login_at)
+                  <div>{{ $v->first_login_at->format('d M Y') }}</div>
+                  <div class="mono" style="color:var(--text-3)">{{ $v->first_login_at->format('H:i') }}</div>
+                @else
+                  <span style="color:var(--text-3)">—</span>
+                @endif
+              </td>
+              <td style="font-size:12px">
+                @if($v->expired_at)
+                  <div style="color:{{ $v->status === 'expired' ? 'var(--err)' : 'var(--text-2)' }};font-weight:{{ $v->status === 'expired' ? '600' : '400' }}">
+                    {{ $v->expired_at->format('d M Y') }}
+                  </div>
+                  <div class="mono" style="color:var(--text-3)">{{ $v->expired_at->format('H:i') }}</div>
+                @else
+                  <span style="color:var(--text-3)">—</span>
+                @endif
+              </td>
+              <td>
+                <div class="tbl-actions">
+                  <a href="{{ route('vouchers.print', ['ids' => $v->id]) }}" target="_blank" class="icon-btn" title="Print">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  </a>
+                  @if($v->status === 'disabled' && (auth()->user()->role ?? null) === 'admin' && \Illuminate\Support\Facades\Route::has('vouchers.enable'))
+                    <form method="POST" action="{{ route('vouchers.enable', $v) }}" style="display:inline-flex">
+                      @csrf @method('PATCH')
+                      <button type="submit" class="icon-btn" title="Aktifkan kembali" style="color:var(--ok)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                      </button>
+                    </form>
+                  @endif
+                  @if(in_array($v->status, ['ready', 'active']))
+                    <form method="POST" action="{{ route('vouchers.disable', $v) }}" style="display:inline-flex">
+                      @csrf @method('PATCH')
+                      <button type="submit" class="icon-btn" title="Nonaktifkan" style="color:var(--warn)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                      </button>
+                    </form>
+                  @endif
+                  @if((auth()->user()->role ?? null) === 'admin' && \Illuminate\Support\Facades\Route::has('vouchers.destroy'))
+                    <form method="POST" action="{{ route('vouchers.destroy', $v) }}" style="display:inline-flex"
+                          onsubmit="return confirm('Hapus voucher {{ $v->code }}?');">
+                      @csrf @method('DELETE')
+                      <button type="submit" class="icon-btn" title="Hapus" style="color:var(--err)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </form>
+                  @endif
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="9" style="padding: 56px 0; text-align:center; color:var(--text-2)">
+                <div style="display:inline-flex;flex-direction:column;align-items:center;gap:10px">
+                  <div style="width:40px;height:40px;border-radius:12px;background:var(--bg-mute);color:var(--text-3);display:grid;place-items:center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9.5V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 0 0 5V17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a2.5 2.5 0 0 0 0-5z"/></svg>
+                  </div>
+                  <div style="font-weight:600;color:var(--text)">
+                    @if($search || $status || $type) Tidak ada voucher yang cocok @else Belum ada voucher @endif
+                  </div>
+                  @if($search || $status || $type)
+                    <a href="{{ route('vouchers.index') }}" style="color:var(--brand-3);font-weight:600">Reset filter →</a>
+                  @else
+                    <a href="{{ route('vouchers.create') }}" style="color:var(--brand-3);font-weight:600">Generate voucher pertama →</a>
+                  @endif
+                </div>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    @if($vouchers->hasPages())
+      <div style="padding: 12px var(--pad-card); border-top: 1px solid var(--border);">
+        {{ $vouchers->withQueryString()->links() }}
+      </div>
+    @endif
+  </div>
 
 @endsection
 
@@ -276,12 +238,10 @@
     var bannerText = document.getElementById('banner-text');
     var btnAllPages= document.getElementById('btn-select-all-pages');
 
-    // Data dari server
-    var totalAll   = {{ $vouchers->total() }};       // total semua hasil filter
-    var pageCount  = {{ $vouchers->count() }};        // jumlah di halaman ini
+    var totalAll   = {{ $vouchers->total() }};
+    var pageCount  = {{ $vouchers->count() }};
     var hasPages   = totalAll > pageCount;
 
-    // Filter params aktif
     var filterParams = new URLSearchParams({
         @if($status) status: '{{ $status }}', @endif
         @if($type)   type:   '{{ $type }}',   @endif
@@ -292,8 +252,6 @@
 
     function updateUI() {
         var checked = document.querySelectorAll('.voucher-checkbox:checked').length;
-
-        // Tombol print
         var count = allPagesSelected ? totalAll : checked;
         if (count > 0) {
             btnPrint.classList.remove('hidden');
@@ -301,12 +259,8 @@
         } else {
             btnPrint.classList.add('hidden');
         }
-
-        // Indeterminate state
         checkAll.indeterminate = !allPagesSelected && checked > 0 && checked < pageCount;
         checkAll.checked = allPagesSelected || (checked === pageCount && pageCount > 0);
-
-        // Banner lintas halaman
         if (allPagesSelected) {
             banner.classList.remove('hidden');
             bannerText.textContent = 'Semua ' + totalAll + ' voucher dipilih.';
@@ -321,33 +275,23 @@
         }
     }
 
-    checkAll.addEventListener('change', function () {
+    if (checkAll) checkAll.addEventListener('change', function () {
         allPagesSelected = false;
         checkboxes.forEach(function (cb) { cb.checked = checkAll.checked; });
         updateUI();
     });
-
     checkboxes.forEach(function (cb) {
-        cb.addEventListener('change', function () {
-            allPagesSelected = false;
-            updateUI();
-        });
+        cb.addEventListener('change', function () { allPagesSelected = false; updateUI(); });
     });
-
-    btnAllPages.addEventListener('click', function () {
-        allPagesSelected = !allPagesSelected;
-        updateUI();
-    });
+    if (btnAllPages) btnAllPages.addEventListener('click', function () { allPagesSelected = !allPagesSelected; updateUI(); });
 
     window.printSelected = function () {
         var printUrl = '{{ route('vouchers.print') }}';
         if (allPagesSelected) {
-            // Kirim filter params ke controller, bukan IDs
             var params = 'print_all=1' + (filterParams ? '&' + filterParams : '');
             window.open(printUrl + '?' + params, '_blank');
         } else {
-            var ids = Array.from(document.querySelectorAll('.voucher-checkbox:checked'))
-                          .map(function (cb) { return cb.value; }).join(',');
+            var ids = Array.from(document.querySelectorAll('.voucher-checkbox:checked')).map(function (cb) { return cb.value; }).join(',');
             if (!ids) return;
             window.open(printUrl + '?ids=' + ids, '_blank');
         }

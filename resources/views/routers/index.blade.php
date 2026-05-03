@@ -5,162 +5,137 @@
 
 @section('content')
 
-    <x-admin.page-header title="Manajemen Router" description="Monitor dan kelola router MikroTik via tunnel VPN." />
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        @foreach ($routers as $router)
-            <div
-                x-data="routerCard('{{ route('routers.stats', $router['id']) }}', '{{ route('routers.show', $router['id']) }}')"
-                x-init="load()"
-                class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-
-                {{-- Header --}}
-                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-900 dark:text-white text-sm">{{ $router['name'] }}</p>
-                            <p class="text-xs text-gray-400 font-mono">{{ $router['host'] }}:{{ $router['port'] }}</p>
-                        </div>
-                    </div>
-
-                    {{-- Status badge --}}
-                    <div>
-                        <template x-if="loading">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-400 animate-pulse">
-                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                                Mengecek...
-                            </span>
-                        </template>
-                        <template x-if="!loading && online">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                Online
-                            </span>
-                        </template>
-                        <template x-if="!loading && !online">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                Offline
-                            </span>
-                        </template>
-                    </div>
-                </div>
-
-                {{-- Stats (shown when online) --}}
-                <div class="px-5 py-4">
-                    <template x-if="loading">
-                        <div class="grid grid-cols-2 gap-3">
-                            @for ($i = 0; $i < 4; $i++)
-                                <div class="h-12 rounded-lg bg-gray-100 dark:bg-gray-700 animate-pulse"></div>
-                            @endfor
-                        </div>
-                    </template>
-
-                    <template x-if="!loading && online">
-                        <div class="space-y-3">
-                            {{-- Identity & Uptime --}}
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2.5">
-                                    <p class="text-xs text-gray-400 mb-0.5">Identitas</p>
-                                    <p class="text-sm font-medium text-gray-800 dark:text-white truncate" x-text="stats.identity"></p>
-                                </div>
-                                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-3 py-2.5">
-                                    <p class="text-xs text-gray-400 mb-0.5">Waktu Aktif</p>
-                                    <p class="text-sm font-medium text-gray-800 dark:text-white" x-text="fmtUptime(stats.uptime)"></p>
-                                </div>
-                            </div>
-
-                            {{-- CPU --}}
-                            <div>
-                                <div class="flex items-center justify-between mb-1">
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">CPU</span>
-                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300" x-text="stats.cpu_load + '%'"></span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full transition-all"
-                                        :class="stats.cpu_load > 80 ? 'bg-red-500' : stats.cpu_load > 50 ? 'bg-yellow-500' : 'bg-green-500'"
-                                        :style="'width:' + stats.cpu_load + '%'"></div>
-                                </div>
-                            </div>
-
-                            {{-- RAM --}}
-                            <div>
-                                <div class="flex items-center justify-between mb-1">
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">RAM</span>
-                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300" x-text="stats.mem_pct + '%'"></span>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full transition-all"
-                                        :class="stats.mem_pct > 80 ? 'bg-red-500' : stats.mem_pct > 60 ? 'bg-yellow-500' : 'bg-blue-500'"
-                                        :style="'width:' + stats.mem_pct + '%'"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                    <template x-if="!loading && !online">
-                        <div class="text-center py-4">
-                            <p class="text-sm text-gray-400 dark:text-gray-500">Router tidak dapat dijangkau</p>
-                            <p class="text-xs text-gray-300 dark:text-gray-600 mt-1" x-text="error"></p>
-                        </div>
-                    </template>
-                </div>
-
-                {{-- Footer --}}
-                <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
-                    <a :href="detailUrl"
-                        class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 transition-colors">
-                        Lihat Detail
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        @endforeach
+  <header class="page-head">
+    <div>
+      <h2>Manajemen Router</h2>
+      <p>Monitor dan kelola router MikroTik via tunnel VPN.</p>
     </div>
+  </header>
+
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px">
+    @foreach ($routers as $router)
+      <a href="{{ route('routers.show', $router['id']) }}"
+         x-data="routerCard('{{ route('routers.stats', $router['id']) }}')"
+         x-init="load()"
+         class="router-card">
+
+        <div class="rc-head">
+          <div class="router-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M15 10v4"/><path d="M17.84 7.17a4 4 0 0 0-5.66 0"/></svg>
+          </div>
+          <div>
+            <h3>{{ $router['name'] }}</h3>
+            <p class="mono">{{ $router['host'] }}:{{ $router['port'] }}</p>
+          </div>
+          <template x-if="loading"><span class="badge" style="margin-left:auto">Mengecek…</span></template>
+          <template x-if="!loading && online"><span class="badge ok" style="margin-left:auto">Online</span></template>
+          <template x-if="!loading && !online"><span class="badge err" style="margin-left:auto">Offline</span></template>
+        </div>
+
+        <template x-if="loading">
+          <div>
+            <div class="rc-meta">
+              <div><span>Identitas</span><b>—</b></div>
+              <div><span>Waktu Aktif</span><b class="mono">—</b></div>
+              <div><span>Versi</span><b class="mono">—</b></div>
+            </div>
+            <div class="rc-bars">
+              <div class="mb"><span>CPU</span><div class="progress"><i></i></div><b class="mono">--%</b></div>
+              <div class="mb"><span>RAM</span><div class="progress"><i></i></div><b class="mono">--%</b></div>
+              <div class="mb"><span>Disk</span><div class="progress"><i></i></div><b class="mono">--%</b></div>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="!loading && online">
+          <div>
+            <div class="rc-meta">
+              <div><span>Identitas</span><b x-text="stats.identity || '—'"></b></div>
+              <div><span>Waktu Aktif</span><b class="mono" x-text="fmtUptime(stats.uptime)"></b></div>
+              <div><span>Versi</span><b class="mono" x-text="stats.version ? 'ROS ' + stats.version : '—'"></b></div>
+            </div>
+            <div class="rc-bars">
+              <div class="mb"><span>CPU</span>
+                <div class="progress" :class="stats.cpu_load > 80 ? 'err' : stats.cpu_load > 50 ? 'warn' : 'ok'">
+                  <i :style="'width:' + stats.cpu_load + '%'"></i>
+                </div>
+                <b class="mono" x-text="stats.cpu_load + '%'"></b>
+              </div>
+              <div class="mb"><span>RAM</span>
+                <div class="progress" :class="stats.mem_pct > 80 ? 'err' : stats.mem_pct > 60 ? 'warn' : ''">
+                  <i :style="'width:' + stats.mem_pct + '%'"></i>
+                </div>
+                <b class="mono" x-text="stats.mem_pct + '%'"></b>
+              </div>
+              <div class="mb"><span>Disk</span>
+                <div class="progress" :class="stats.hdd_pct > 80 ? 'err' : stats.hdd_pct > 60 ? 'warn' : ''">
+                  <i :style="'width:' + stats.hdd_pct + '%'"></i>
+                </div>
+                <b class="mono" x-text="stats.hdd_pct + '%'"></b>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="!loading && !online">
+          <div style="padding:14px 0;text-align:center;color:var(--text-3)">
+            <div style="font-size:13px;color:var(--text-2)">Router tidak dapat dijangkau</div>
+            <div style="font-size:11.5px;margin-top:4px" x-text="error"></div>
+          </div>
+        </template>
+
+        <div class="rc-foot">
+          Lihat detail
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
+    @endforeach
+  </section>
+
+  <style>
+    .router-card { display:block;background:var(--card-bg);border:var(--card-border);border-radius:var(--r-lg);box-shadow:var(--card-shadow);padding:20px;color:var(--text);transition:all .18s ease;text-decoration:none; }
+    .router-card:hover { border-color:var(--brand-3);box-shadow:var(--shadow-md);transform:translateY(-2px); }
+    .rc-head { display:flex;align-items:center;gap:12px;margin-bottom:18px; }
+    .router-mark { width:42px;height:42px;border-radius:11px;background:color-mix(in srgb,var(--brand-3) 12%,transparent);color:var(--brand-3);display:grid;place-items:center;flex-shrink:0; }
+    .router-mark svg { width:20px;height:20px; }
+    .rc-head h3 { margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em; }
+    .rc-head p { margin:2px 0 0;color:var(--text-3);font-size:12px; }
+    .rc-meta { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px;background:var(--bg-mute);border-radius:var(--r-md);margin-bottom:14px; }
+    .rc-meta span { display:block;color:var(--text-3);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px; }
+    .rc-meta b { font-size:13px;font-weight:600; }
+    .rc-bars { display:flex;flex-direction:column;gap:8px;margin-bottom:14px; }
+    .mb { display:grid;grid-template-columns:48px 1fr 44px;gap:12px;align-items:center;font-size:12px; }
+    .mb span { color:var(--text-2); }
+    .mb b { font-weight:600;text-align:right;font-size:12px; }
+    .rc-foot { display:flex;align-items:center;gap:6px;color:var(--brand-3);font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid var(--border); }
+  </style>
 
 @endsection
 
 @push('scripts')
 <script>
-function routerCard(statsUrl, detailUrl) {
-    return {
-        statsUrl,
-        detailUrl,
-        loading: true,
-        online: false,
-        stats: {},
-        error: '',
-        async load() {
-            try {
-                const res = await fetch(statsUrl);
-                const data = await res.json();
-                this.online = data.online;
-                this.stats  = data.stats ?? {};
-                this.error  = data.error ?? '';
-            } catch (e) {
-                this.online = false;
-                this.error  = e.message;
-            } finally {
-                this.loading = false;
-            }
-        },
-        fmtUptime(str) {
-            if (!str) return '-';
-            const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
-            const parts = [];
-            for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) {
-                if (label[unit]) parts.push(num + label[unit]);
-            }
-            return parts.join(' ') || '-';
-        },
-    };
+function routerCard(statsUrl) {
+  return {
+    statsUrl,
+    loading: true, online: false, stats: {}, error: '',
+    async load() {
+      try {
+        const res = await fetch(statsUrl);
+        const data = await res.json();
+        this.online = data.online;
+        this.stats  = data.stats ?? {};
+        this.error  = data.error ?? '';
+      } catch (e) { this.online = false; this.error = e.message; }
+      finally { this.loading = false; }
+    },
+    fmtUptime(str) {
+      if (!str) return '-';
+      const label = { w: 'mg', d: 'hr', h: 'j', m: 'm' };
+      const parts = [];
+      for (const [, num, unit] of str.matchAll(/(\d+)([wdhms])/g)) if (label[unit]) parts.push(num + label[unit]);
+      return parts.join(' ') || '-';
+    },
+  };
 }
 </script>
 @endpush

@@ -5,170 +5,168 @@
 
 @php
     $st = $status['status'] ?? 'unknown';
-    $statusBadge = match($st) {
-        'open'             => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-        'qr', 'connecting' => 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-        default            => 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    $statusTone = match($st) {
+        'open'             => 'ok',
+        'qr', 'connecting' => 'warn',
+        default            => 'err',
     };
-    $inputCls = 'w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors';
-    $btnPrimary = 'inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors';
-    $btnDanger  = 'inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors';
-    $btnNeutral = 'inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition-colors';
 @endphp
 
 @section('content')
-<div class="p-4 md:p-6 space-y-6">
 
-    <x-admin.page-header title="WhatsApp Gateway"
-                         description="Kirim pesan WhatsApp dan kelola kontak pelanggan untuk reminder otomatis.">
-        <x-slot:actions>
-            <a href="/wa-admin" target="_blank"
-               class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-lg transition-colors">
-                Buka panel QR
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                </svg>
-            </a>
-        </x-slot:actions>
-    </x-admin.page-header>
+  <header class="page-head">
+    <div>
+      <h2>WhatsApp Gateway</h2>
+      <p>Kirim pesan WhatsApp dan kelola kontak pelanggan untuk reminder otomatis.</p>
+    </div>
+    <div class="head-actions">
+      <a href="/wa-admin" target="_blank" class="btn">
+        Buka panel QR
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </header>
 
-    {{-- Status badge --}}
-    <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-        <div class="flex items-center gap-3">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $statusBadge }}">
-                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                Status: {{ strtoupper($st) }}
-            </span>
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    @php
+      $bannerTone = $statusTone;  // ok | warn | err
+      $bannerColor = $bannerTone === 'ok' ? 'ok' : ($bannerTone === 'warn' ? 'warn' : 'err');
+      $phoneNumber = $status['number'] ?? $status['phone'] ?? null;
+      $weeklyCount = $status['weekly_count'] ?? null;
+    @endphp
+    <div class="card card-pad" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg, color-mix(in srgb, var({{ '--' . $bannerColor }}) 8%, transparent), color-mix(in srgb, var({{ '--' . $bannerColor }}) 0%, transparent));border-color:color-mix(in srgb, var({{ '--' . $bannerColor }}) 30%, var(--border))">
+      <div style="width:40px;height:40px;border-radius:10px;background:color-mix(in srgb,var({{ '--' . $bannerColor }}) 18%,transparent);color:var({{ '--' . $bannerColor }});display:grid;place-items:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      </div>
+      <div style="flex:1">
+        <b>Status: {{ strtoupper($st) }}</b>
+        <div style="color:var(--text-2);font-size:12.5px">
+          @if($phoneNumber)Terhubung sebagai <span class="mono">{{ $phoneNumber }}</span>@else WhatsApp Gateway @endif
+          @if($weeklyCount) · {{ $weeklyCount }} pesan minggu ini @endif
         </div>
+      </div>
+      <span class="badge {{ $statusTone }}">{{ strtoupper($st) === 'OPEN' ? 'Connected' : ucfirst($st) }}</span>
     </div>
 
-    {{-- Flash messages --}}
     @if(session('ok'))
-        <div class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 px-4 py-3 text-sm">
-            {{ session('ok') }}
-        </div>
+      <div class="card card-pad" style="background: color-mix(in srgb, var(--ok) 8%, var(--bg-elev)); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok); font-size:13px;">{{ session('ok') }}</div>
     @endif
     @if($errors->any())
-        <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 px-4 py-3 text-sm">
-            <ul class="list-disc list-inside space-y-0.5">
-                @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-            </ul>
-        </div>
+      <div class="card card-pad" style="background: color-mix(in srgb, var(--err) 8%, var(--bg-elev)); border-color: color-mix(in srgb, var(--err) 30%, transparent); color: var(--err); font-size:13px;">
+        <ul style="margin:0;padding-left:18px">
+          @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+        </ul>
+      </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {{-- Manual send --}}
-        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Kirim Manual</h3>
-            <form method="post" action="{{ route('whatsapp.send') }}" class="space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nomor tujuan</label>
-                    <input name="number" required placeholder="08xxxxxxxxxx" class="{{ $inputCls }}">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Pesan</label>
-                    <textarea name="message" rows="5" required placeholder="Isi pesan..." class="{{ $inputCls }}"></textarea>
-                </div>
-                <button type="submit" class="{{ $btnPrimary }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
-                    Kirim
-                </button>
-            </form>
-        </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;">
 
-        {{-- Tambah kontak --}}
-        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Tambah Kontak Pelanggan</h3>
-            <form method="post" action="{{ route('whatsapp.contacts.store') }}" class="space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
-                    <input name="username" required placeholder="contoh: admin" class="{{ $inputCls }}">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nomor WhatsApp</label>
-                    <input name="phone" required placeholder="08xxxxxxxxxx" class="{{ $inputCls }}">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nama <span class="text-gray-400">(opsional)</span></label>
-                        <input name="name" placeholder="Nama pelanggan" class="{{ $inputCls }}">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Catatan <span class="text-gray-400">(opsional)</span></label>
-                        <input name="notes" placeholder="catatan internal" class="{{ $inputCls }}">
-                    </div>
-                </div>
-                <button type="submit" class="{{ $btnPrimary }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Simpan Kontak
-                </button>
-            </form>
-        </div>
+      {{-- Manual send --}}
+      <div class="card">
+        <div class="card-head"><h3>Kirim Manual</h3></div>
+        <form method="post" action="{{ route('whatsapp.send') }}" class="card-pad" style="display:flex;flex-direction:column;gap:14px;">
+          @csrf
+          <div class="field">
+            <label>Nomor tujuan</label>
+            <input name="number" required placeholder="08xxxxxxxxxx" class="input">
+          </div>
+          <div class="field">
+            <label>Pesan</label>
+            <textarea name="message" rows="5" required placeholder="Isi pesan..." class="textarea"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Kirim
+          </button>
+        </form>
+      </div>
+
+      {{-- Tambah kontak --}}
+      <div class="card">
+        <div class="card-head"><h3>Tambah Kontak Pelanggan</h3></div>
+        <form method="post" action="{{ route('whatsapp.contacts.store') }}" class="card-pad" style="display:flex;flex-direction:column;gap:14px;">
+          @csrf
+          <div class="field">
+            <label>Username</label>
+            <input name="username" required placeholder="contoh: admin" class="input">
+          </div>
+          <div class="field">
+            <label>Nomor WhatsApp</label>
+            <input name="phone" required placeholder="08xxxxxxxxxx" class="input">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="field">
+              <label>Nama <span style="color:var(--text-3)">(opsional)</span></label>
+              <input name="name" placeholder="Nama pelanggan" class="input">
+            </div>
+            <div class="field">
+              <label>Catatan <span style="color:var(--text-3)">(opsional)</span></label>
+              <input name="notes" placeholder="catatan internal" class="input">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Simpan Kontak
+          </button>
+        </form>
+      </div>
     </div>
 
     {{-- List kontak --}}
-    <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Daftar Kontak</h3>
-            <form method="get" class="flex gap-2">
-                <input name="q" value="{{ $q }}" placeholder="username,phone,nama"
-                       class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
-                <button class="{{ $btnNeutral }} text-xs px-3 py-1.5">Cari</button>
-            </form>
+    <div class="card">
+      <div class="card-head">
+        <h3>Daftar Kontak</h3>
+        <div class="ch-actions">
+          <form method="get" style="display:flex;gap:8px">
+            <input name="q" value="{{ $q }}" placeholder="username, phone, nama" class="input" style="width:240px">
+            <button class="btn btn-sm">Cari</button>
+          </form>
         </div>
+      </div>
 
-        {{-- Forms (HTML5 form= attribute trick) --}}
-        @foreach($contacts as $c)
-            <form id="upd-{{ $c->id }}" method="post" action="{{ route('whatsapp.contacts.update', $c) }}">@csrf @method('PATCH')</form>
-            <form id="del-{{ $c->id }}" method="post" action="{{ route('whatsapp.contacts.destroy', $c) }}"
-                  onsubmit="return confirm('Hapus kontak {{ $c->username }}?');">@csrf @method('DELETE')</form>
-        @endforeach
+      @foreach($contacts as $c)
+        <form id="upd-{{ $c->id }}" method="post" action="{{ route('whatsapp.contacts.update', $c) }}">@csrf @method('PATCH')</form>
+        <form id="del-{{ $c->id }}" method="post" action="{{ route('whatsapp.contacts.destroy', $c) }}"
+              onsubmit="return confirm('Hapus kontak {{ $c->username }}?');">@csrf @method('DELETE')</form>
+      @endforeach
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-300">
-                    <tr>
-                        <th class="text-left px-4 py-3 font-medium">Username</th>
-                        <th class="text-left px-4 py-3 font-medium">Nama</th>
-                        <th class="text-left px-4 py-3 font-medium">Phone</th>
-                        <th class="text-left px-4 py-3 font-medium">Notes</th>
-                        <th class="text-left px-4 py-3 font-medium">Dikirim</th>
-                        <th class="text-left px-4 py-3 font-medium">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-                    @forelse($contacts as $c)
-                    @php
-                        $cellInput = 'w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500';
-                    @endphp
-                    <tr>
-                        <td class="px-4 py-3 font-mono text-xs whitespace-nowrap">{{ $c->username }}</td>
-                        <td class="px-4 py-3"><input form="upd-{{ $c->id }}" name="name"  value="{{ $c->name }}"  class="{{ $cellInput }} min-w-[140px]"></td>
-                        <td class="px-4 py-3"><input form="upd-{{ $c->id }}" name="phone" value="{{ $c->phone }}" required class="{{ $cellInput }} min-w-[140px]"></td>
-                        <td class="px-4 py-3"><input form="upd-{{ $c->id }}" name="notes" value="{{ $c->notes }}" class="{{ $cellInput }} min-w-[160px]"></td>
-                        <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                            {{ $c->reminder_sent_at?->format('d M Y H:i') ?? '—' }}
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <div class="flex gap-1.5">
-                                <button form="upd-{{ $c->id }}" class="inline-flex items-center px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium rounded-lg transition-colors">Update</button>
-                                <button form="del-{{ $c->id }}" class="{{ $btnDanger }}">Hapus</button>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Belum ada kontak.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700">{{ $contacts->links() }}</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Nama</th>
+              <th>Phone</th>
+              <th>Notes</th>
+              <th>Dikirim</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($contacts as $c)
+              <tr>
+                <td class="mono" style="font-size:12px">{{ $c->username }}</td>
+                <td><input form="upd-{{ $c->id }}" name="name"  value="{{ $c->name }}"  class="input" style="min-width:140px;padding:6px 8px"></td>
+                <td><input form="upd-{{ $c->id }}" name="phone" value="{{ $c->phone }}" required class="input" style="min-width:140px;padding:6px 8px"></td>
+                <td><input form="upd-{{ $c->id }}" name="notes" value="{{ $c->notes }}" class="input" style="min-width:160px;padding:6px 8px"></td>
+                <td style="font-size:12px;color:var(--text-3);white-space:nowrap">
+                  {{ $c->reminder_sent_at?->format('d M Y H:i') ?? '—' }}
+                </td>
+                <td>
+                  <div style="display:flex;gap:6px;justify-content:flex-end">
+                    <button form="upd-{{ $c->id }}" type="submit" class="btn btn-sm btn-primary">Update</button>
+                    <button form="del-{{ $c->id }}" type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                  </div>
+                </td>
+              </tr>
+            @empty
+              <tr><td colspan="6" style="padding:48px 0;text-align:center;color:var(--text-3)">Belum ada kontak.</td></tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+      <div style="padding: 12px var(--pad-card); border-top:1px solid var(--border)">{{ $contacts->links() }}</div>
     </div>
-</div>
+  </div>
 @endsection

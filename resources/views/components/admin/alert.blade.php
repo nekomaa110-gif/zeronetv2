@@ -1,32 +1,30 @@
 @props(['type' => 'success', 'message' => ''])
 
 @php
-    $styles = [
-        'success' => 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-700 text-green-800 dark:text-green-300',
-        'error'   => 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-700 text-red-800 dark:text-red-300',
-        'warning' => 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300',
-        'info'    => 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-700 text-blue-800 dark:text-blue-300',
-    ];
-    $style = $styles[$type] ?? $styles['info'];
+    $tone = [
+        'success' => 'ok',
+        'error'   => 'err',
+        'warning' => 'warn',
+        'info'    => 'info',
+    ][$type] ?? 'info';
 @endphp
 
 <div x-data="{ show: true }" x-show="show" x-transition
-     {{ $attributes->merge(['class' => "flex items-center gap-3 p-4 border rounded-lg text-sm $style"]) }}>
-    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+     {{ $attributes->merge(['class' => 'alert tone-'.$tone]) }}
+     style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;background:color-mix(in srgb, var(--{{ $tone === 'ok' ? 'ok' : ($tone === 'err' ? 'err' : ($tone === 'warn' ? 'warn' : 'info')) }}) 8%, var(--bg-elev));color:var(--{{ $tone === 'ok' ? 'ok' : ($tone === 'err' ? 'err' : ($tone === 'warn' ? 'warn' : 'info')) }})">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
         @if($type === 'success')
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01" stroke-linecap="round" stroke-linejoin="round"/>
         @elseif($type === 'error')
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         @elseif($type === 'warning')
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         @else
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         @endif
     </svg>
-    <span class="flex-1">{{ $message }}</span>
-    <button @click="show = false" class="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
+    <span style="flex:1;color:var(--text)">{{ $message }}</span>
+    <button @click="show = false" type="button" class="icon-btn" style="width:24px;height:24px;border:0;background:transparent">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
 </div>

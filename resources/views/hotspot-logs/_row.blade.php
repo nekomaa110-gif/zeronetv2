@@ -5,77 +5,68 @@
     $clientIp = $userIps[$log->username] ?? '';
     $isNew    = $isNew ?? false;
 @endphp
-<tr class="{{ $isNew ? 'log-row-new' : '' }} hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+<tr class="{{ $isNew ? 'log-row-new' : '' }}">
+  <td class="ix">
+    @if($isNew)
+      <span class="badge ok" style="padding:1px 6px;font-size:10px">baru</span>
+    @else
+      {{ $rowNumber ?? '—' }}
+    @endif
+  </td>
 
-    <td class="px-5 py-3.5 text-gray-400 dark:text-gray-500 text-xs">
-        @if($isNew)
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold
-                         bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 leading-none">baru</span>
-        @else
-            {{ $rowNumber ?? '—' }}
+  <td style="font-weight:600">{{ $log->username }}</td>
+
+  <td style="font-size:12px;color:var(--text-2);white-space:nowrap">
+    {{ $log->authdate?->format('d M Y') }}
+  </td>
+
+  <td class="mono" style="font-size:12px;color:var(--text-2)">
+    {{ $log->authdate?->format('H:i:s') }}
+  </td>
+
+  <td style="text-align:center">
+    @if($success)
+      <span class="badge ok">Berhasil</span>
+    @else
+      <span class="badge err">Gagal</span>
+    @endif
+  </td>
+
+  <td style="font-size:12px">
+    @if($success)
+      <span style="color:var(--ok)">Login berhasil</span>
+    @else
+      @php $reason = $rejectReasons[$log->username] ?? 'Access-Reject'; @endphp
+      @if($reason === 'Voucher sudah expired')
+        <span style="color:var(--warn)">{{ $reason }}</span>
+      @elseif($reason === 'Akun dinonaktifkan')
+        <span style="color:var(--warn)">{{ $reason }}</span>
+      @elseif($reason === 'Akun sedang digunakan')
+        <span style="color:var(--info)">{{ $reason }}</span>
+      @else
+        <span style="color:var(--err)">{{ $reason }}</span>
+      @endif
+    @endif
+  </td>
+
+  <td style="font-size:12px">
+    @if($nasIp !== '' || $clientIp !== '')
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        @if($nasIp !== '')
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:600;width:30px;text-align:center;padding:1px 0;border-radius:4px;background:var(--bg-mute);color:var(--text-3);letter-spacing:.04em">NAS</span>
+            <span class="mono" style="color:var(--text-2)">{{ $nasIp }}</span>
+          </div>
         @endif
-    </td>
-
-    <td class="px-5 py-3.5 font-medium text-gray-900 dark:text-white">
-        {{ $log->username }}
-    </td>
-
-    <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap">
-        {{ $log->authdate?->format('d M Y') }}
-    </td>
-
-    <td class="px-5 py-3.5 text-gray-500 dark:text-gray-400 text-xs font-mono">
-        {{ $log->authdate?->format('H:i:s') }}
-    </td>
-
-    <td class="px-5 py-3.5 text-center">
-        @if($success)
-            <x-admin.badge color="green" :dot="true">Berhasil</x-admin.badge>
-        @else
-            <x-admin.badge color="red" :dot="true">Gagal</x-admin.badge>
+        @if($clientIp !== '')
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:600;width:30px;text-align:center;padding:1px 0;border-radius:4px;background:color-mix(in srgb, var(--ok) 14%, transparent);color:var(--ok);letter-spacing:.04em">IP</span>
+            <span class="mono" style="color:var(--ok)">{{ $clientIp }}</span>
+          </div>
         @endif
-    </td>
-
-    <td class="px-5 py-3.5 text-xs">
-        @if($success)
-            <span class="text-green-600 dark:text-green-400">Login berhasil</span>
-        @else
-            @php $reason = $rejectReasons[$log->username] ?? 'Access-Reject'; @endphp
-            @if($reason === 'Voucher sudah expired')
-                <span class="text-orange-500 dark:text-orange-400">{{ $reason }}</span>
-            @elseif($reason === 'Akun dinonaktifkan')
-                <span class="text-yellow-600 dark:text-yellow-400">{{ $reason }}</span>
-            @elseif($reason === 'Akun sedang digunakan')
-                <span class="text-blue-500 dark:text-blue-400">{{ $reason }}</span>
-            @else
-                <span class="text-red-500 dark:text-red-400">{{ $reason }}</span>
-            @endif
-        @endif
-    </td>
-
-    <td class="px-5 py-3.5 text-xs font-mono">
-        @if($nasIp !== '' || $clientIp !== '')
-            <div class="space-y-1">
-                @if($nasIp !== '')
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-sans text-[10px] font-semibold w-7 text-center py-0.5 rounded
-                                     bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400
-                                     leading-none tracking-wide">NAS</span>
-                        <span class="text-gray-600 dark:text-gray-300">{{ $nasIp }}</span>
-                    </div>
-                @endif
-                @if($clientIp !== '')
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-sans text-[10px] font-semibold w-7 text-center py-0.5 rounded
-                                     bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400
-                                     leading-none tracking-wide">IP</span>
-                        <span class="text-green-600 dark:text-green-400">{{ $clientIp }}</span>
-                    </div>
-                @endif
-            </div>
-        @else
-            <span class="text-gray-300 dark:text-gray-600">—</span>
-        @endif
-    </td>
-
+      </div>
+    @else
+      <span style="color:var(--text-3)">—</span>
+    @endif
+  </td>
 </tr>

@@ -23,10 +23,12 @@
             position: sticky; top: 0; z-index: 10;
         }
         .btn-print {
-            padding: 8px 18px; background: #7c3aed; color: #fff;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #10B981 0%, #06B6D4 60%, #0EA5E9 100%);
+            color: #fff;
             border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
         }
-        .btn-print:hover { background: #6d28d9; }
+        .btn-print:hover { filter: brightness(1.05); }
         .btn-close {
             padding: 8px 14px; background: #e5e7eb; color: #374151;
             border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;

@@ -5,59 +5,39 @@
 
 @section('content')
 
-    <x-admin.page-header
-        title="Log Aktivitas"
-        description="Riwayat semua aksi yang dilakukan oleh admin dan operator panel ZeroNet."/>
+  <header class="page-head">
+    <div>
+      <h2>Log Aktivitas</h2>
+      <p>Riwayat semua aksi yang dilakukan oleh admin dan operator panel ZeroNet.</p>
+    </div>
+  </header>
 
-    <x-admin.table>
+  <div class="card">
+    <div style="padding: 14px var(--pad-card); border-bottom: 1px solid var(--border);">
+      <form method="GET" action="{{ route('activity-logs.index') }}"
+            data-live-target="#activity-logs-results"
+            style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
 
-        {{-- Filter bar --}}
-        <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700">
-            <form method="GET" action="{{ route('activity-logs.index') }}"
-                  data-live-target="#activity-logs-results">
-                <div class="flex flex-wrap items-center gap-3">
-
-                    {{-- Search --}}
-                    <div class="relative w-60">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </span>
-                        <input type="text" name="search" value="{{ $search }}"
-                               placeholder="Cari user atau aksi..." data-live-search
-                               class="w-full pl-9 pr-8 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400
-                                      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
-                        @php $hasFilter = $search || $dateFrom || $dateTo; @endphp
-                        <button type="button" data-live-reset title="Reset semua filter"
-                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 {{ $hasFilter ? '' : 'hidden' }}">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    {{-- Date from --}}
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" data-live-submit
-                           title="Dari tanggal"
-                           class="py-2 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                  focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
-
-                    <span class="text-gray-400 text-xs">—</span>
-
-                    {{-- Date to --}}
-                    <input type="date" name="date_to" value="{{ $dateTo }}" data-live-submit
-                           title="Sampai tanggal"
-                           class="py-2 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                  focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors">
-                </div>
-            </form>
+        <div class="input-group" style="width:240px;position:relative;">
+          <svg class="ig-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" name="search" value="{{ $search }}" placeholder="Cari user atau aksi..." data-live-search class="input">
+          @php $hasFilter = $search || $dateFrom || $dateTo; @endphp
+          <button type="button" data-live-reset title="Reset semua filter"
+                  class="icon-btn {{ $hasFilter ? '' : 'hidden' }}"
+                  style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;background:transparent">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
-        {{-- Container hasil (di-swap via AJAX) --}}
-        <div id="activity-logs-results" data-live-results class="transition-opacity duration-150">
-            @include('activity-logs._results')
-        </div>
-    </x-admin.table>
+        <input type="date" name="date_from" value="{{ $dateFrom }}" data-live-submit class="input" style="width:auto" title="Dari tanggal">
+        <span style="color:var(--text-3)">—</span>
+        <input type="date" name="date_to" value="{{ $dateTo }}" data-live-submit class="input" style="width:auto" title="Sampai tanggal">
+      </form>
+    </div>
+
+    <div id="activity-logs-results" data-live-results>
+      @include('activity-logs._results')
+    </div>
+  </div>
 
 @endsection
